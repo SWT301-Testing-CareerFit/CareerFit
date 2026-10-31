@@ -111,7 +111,6 @@ export function Navbar() {
             <button type="button" aria-current={activePage === 'home' ? 'page' : undefined} onClick={openPublicHome}>Trang chủ</button>
             <button type="button" onClick={() => setActivePage('job-search')}>Việc làm</button>
             <a className="public-navigation-about" href="/#careerfit-opportunities">Khám phá</a>
-            <button type="button" className="public-navigation-employer" onClick={() => setActivePage('employer-register')}>Doanh nghiệp</button>
           </nav>}
           <div className="login-header-actions">
             <button type="button" className="login-register" aria-current={activePage === 'login' ? 'page' : undefined} onClick={() => setActivePage(activePage === 'login' ? 'home' : 'login')}>{activePage === 'login' ? 'Về trang chủ' : 'Đăng nhập'}{isCinematicPage && <ChevronRight size={14} aria-hidden="true" />}</button>
@@ -165,15 +164,6 @@ export function Navbar() {
                 }`}
               >
                 Việc làm
-              </button>
-              <button
-                type="button"
-                onClick={() => setActivePage('employer-register')}
-                className={`text-sm font-medium transition-colors cursor-pointer ${
-                  activePage === 'employer-register' ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Doanh nghiệp
               </button>
             </nav>
           )}
