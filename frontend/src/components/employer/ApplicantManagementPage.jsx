@@ -1,0 +1,485 @@
+import { EmployerPageHeader } from './EmployerPageHeader';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useApp } from '../../context/AppContext';
+import { MatchBadge } from '../common/Badge';
+import { calculateSkillMatch } from '../../utils/matching';
+import { Modal } from '../common/Modal';
+import { ScheduleInterviewModal } from './ScheduleInterviewModal';
+import { SegmentedControl } from '../common/SegmentedControl';
+import { FileText, Calendar, Search, Filter, RotateCcw, X, Check, AlertTriangle, XCircle, Award } from 'lucide-react';
+
+export function ApplicantManagementPage() {
+  const {
+    currentUser,
+    applications,
+    jobs,
+    employerProfile,
+    candidateProfile,
+    updateApplicationStatus,
+    refreshApplications,
+    setViewingCVModalCandidate,
+    viewingCVModalCandidate,
+    selectedJobId,
+    setSelectedJobId,
+    companies,
+    showToast
+  } = useApp();
+
+  const employerJobIds = useMemo(() => {
+    if (!employerProfile && !currentUser) return [];
+    const validIds = new Set();
+    if (currentUser?.id) validIds.add(currentUser.id);
+    if (employerProfile?.ownerUserId) validIds.add(employerProfile.ownerUserId);
+    if (employerProfile?.id) validIds.add(employerProfile.id);
+
+    const validNames = new Set();
+    if (employerProfile?.companyName) validNames.add(employerProfile.companyName.toLowerCase().trim());
+    if (currentUser?.username) validNames.add(currentUser.username.toLowerCase().trim());
+    if (currentUser?.fullName) validNames.add(currentUser.fullName.toLowerCase().trim());
+
+    if (Array.isArray(companies)) {
+      companies.forEach(c => {
+        const matchesUser = (currentUser?.id && c.ownerUserId === currentUser.id) ||
+                            (currentUser?.email && c.email?.toLowerCase() === currentUser.email.toLowerCase());
+        if (matchesUser) {
+          if (c.id) validIds.add(c.id);
+          if (c.ownerUserId) validIds.add(c.ownerUserId);
+          if (c.companyName) validNames.add(c.companyName.toLowerCase().trim());
+        }
+      });
+    }
+
+    return jobs
+      .filter(j => 
+        (j.employerId && validIds.has(j.employerId)) ||
+        (j.company && validNames.has(j.company.toLowerCase().trim()))
+      )
+      .map(j => j.id);
+  }, [jobs, employerProfile, currentUser, companies]);
+
+  // Search & Filter State
+  useEffect(() => {
+    if (typeof refreshApplications === 'function') {
+      refreshApplications();
+    }
+  }, [refreshApplications]);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedJobFilter, setSelectedJobFilter] = useState(() => {
+    if (selectedJobId && selectedJobId !== 'All') return selectedJobId;
+    return 'All';
+  });
+
+  useEffect(() => {
+    if (selectedJobId && selectedJobId !== 'All') {
+      setSelectedJobFilter(selectedJobId);
+    }
+  }, [selectedJobId]);
+  const [statusTab, setStatusTab] = useState('All');
+  const [selectedSkill, setSelectedSkill] = useState('All');
+  const [minMatchScore, setMinMatchScore] = useState(0);
+
+  // Candidate Side Drawer State
+  const [drawerApplicant, setDrawerApplicant] = useState(null);
+
+  // Interview Modal State
+  const [activeInterviewAppId, setActiveInterviewAppId] = useState(null);
+
+  // Filtered Applications
+  const filteredApps = useMemo(() => {
+    return applications.filter(app => {
+      // Must belong to current employer's job postings
+      if (!employerJobIds.includes(app.jobId)) return false;
+
+      // Job filter
+      if (selectedJobFilter !== 'All' && app.jobId !== selectedJobFilter) return false;
+
+      // Status tab
+      if (statusTab !== 'All' && app.status !== statusTab) return false;
+
+      // Search Query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesName = app.candidateName.toLowerCase().includes(q);
+        const matchesEmail = (app.candidateEmail || '').toLowerCase().includes(q);
+        const matchesUni = (app.candidateUniversity || '').toLowerCase().includes(q);
+        const job = jobs.find(j => j.id === app.jobId);
+        const matchesJobTitle = job ? job.title.toLowerCase().includes(q) : false;
+        if (!matchesName && !matchesEmail && !matchesUni && !matchesJobTitle) return false;
+      }
+
+      // Skill Filter
+      if (selectedSkill !== 'All') {
+        const skills = app.candidateSkills || candidateProfile.skills;
+        const hasSkill = skills.some(s => s.toLowerCase() === selectedSkill.toLowerCase());
+        if (!hasSkill) return false;
+      }
+
+      // Match Score Threshold
+      if (minMatchScore > 0) {
+        const job = jobs.find(j => j.id === app.jobId) || { title: 'Tin tuyển dụng', requiredSkills: [] };
+        const match = calculateSkillMatch(app.candidateSkills || (candidateProfile ? candidateProfile.skills : []), job.requiredSkills || []);
+
+        if (match.percentage < minMatchScore) return false;
+      }
+
+      return true;
+    });
+  }, [applications, employerJobIds, selectedJobFilter, statusTab, searchQuery, selectedSkill, minMatchScore, jobs, candidateProfile]);
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedJobFilter('All');
+    setStatusTab('All');
+    setSelectedSkill('All');
+    setMinMatchScore(0);
+  };
+
+  const hasFilters = Boolean(searchQuery || selectedJobFilter !== 'All' || statusTab !== 'All' || selectedSkill !== 'All' || minMatchScore > 0);
+
+  return (
+    <div className="employer-page hiring-applicants-page space-y-6 mx-auto">
+      <EmployerPageHeader eyebrow="KẾT NỐI ĐÚNG NĂNG LỰC" title="Hồ sơ ứng viên" description="Theo dõi, so khớp Match Score, mở CV và lên lịch phỏng vấn với các ứng viên IT." />
+      <div className="employer-metrics-grid" aria-label="Trạng thái ứng viên">
+        <button type="button" className="employer-metric-total" aria-pressed={!hasFilters} onClick={clearFilters}>
+          <span>Ứng viên đang hiển thị</span><strong>{filteredApps.length.toString().padStart(2, '0')}</strong>
+        </button>
+        {[['Đã nộp', 'Hồ sơ mới'], ['Phỏng vấn', 'Đang phỏng vấn'], ['Offer', 'Đã gửi offer']].map(([status, label]) => (
+          <button type="button" key={status} aria-pressed={statusTab === status} onClick={() => setStatusTab(statusTab === status ? 'All' : status)}>
+            <span>{label}</span><strong>{applications.filter(app => employerJobIds.includes(app.jobId) && app.status === status).length.toString().padStart(2, '0')}</strong>
+          </button>
+        ))}
+      </div>
+
+      {/* 2. SEARCH & FILTER TOOLBAR */}
+      <div className="employer-filter-panel bg-white p-5 rounded-2xl border border-slate-200 space-y-4">
+        {/* Top Search & Dropdowns */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+          <div className="md:col-span-6 relative">
+            <div className="search-input-wrapper">
+              <Search className="search-input-icon text-slate-400" size={18} />
+              <input
+                type="text"
+                className="form-control search-input-control text-xs font-medium bg-slate-50 border-slate-200 focus:bg-white h-10"
+                placeholder="Tìm ứng viên theo tên, email, trường hoặc vị trí nộp..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="md:col-span-3">
+            <select
+              className="form-control text-xs bg-slate-50 border-slate-200 font-medium h-10"
+              aria-label="Lọc ứng viên theo vị trí"
+              value={selectedJobFilter}
+              onChange={(e) => setSelectedJobFilter(e.target.value)}
+            >
+              <option value="All">Tất cả bài đăng ({employerJobIds.length})</option>
+              {jobs.filter(job => employerJobIds.includes(job.id)).map(j => (
+                <option key={j.id} value={j.id}>{j.title}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="md:col-span-3">
+            <select
+              className="form-control text-xs bg-slate-50 border-slate-200 font-medium h-10"
+              aria-label="Lọc theo kỹ năng ứng viên"
+              value={selectedSkill}
+              onChange={(e) => setSelectedSkill(e.target.value)}
+            >
+              <option value="All">Tất cả Kỹ năng ứng viên</option>
+              <option value="Java">Java</option>
+              <option value="Spring Boot">Spring Boot</option>
+              <option value="React">React</option>
+              <option value="SQL">SQL</option>
+              <option value="Docker">Docker</option>
+              <option value="Git">Git</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Status Tabs Row */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+          <SegmentedControl
+            activeTab={statusTab}
+            onChange={setStatusTab}
+            tabs={[
+              { id: 'All', label: 'Tất cả', activeColor: 'bg-blue-600 shadow-xs' },
+              { id: 'Đã nộp', label: 'Mới nộp (New)', activeColor: 'bg-indigo-600 shadow-xs' },
+              { id: 'Đã xem', label: 'Đã xem hồ sơ', activeColor: 'bg-sky-600 shadow-xs' },
+              { id: 'Phỏng vấn', label: 'Lịch Phỏng vấn', activeColor: 'bg-amber-600 shadow-xs' },
+              { id: 'Offer', label: 'Đã gửi Offer', activeColor: 'bg-emerald-600 shadow-xs' },
+              { id: 'Từ chối', label: 'Từ chối', activeColor: 'bg-rose-600 shadow-xs' }
+            ]}
+          />
+
+          <div className="flex items-center gap-3">
+            {/* Match Score Threshold buttons */}
+            <div className="flex items-center gap-1 text-xs">
+              <span className="text-slate-400 font-bold mr-1">Match:</span>
+              {[0, 60, 80].map(sc => (
+                <button
+                  key={sc}
+                  onClick={() => setMinMatchScore(sc)}
+                  className={`px-2 py-0.5 rounded text-[11px] font-bold border transition-colors ${
+                    minMatchScore === sc ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200'
+                  }`}
+                >
+                  {sc === 0 ? 'Tất cả' : `${sc}%+`}
+                </button>
+              ))}
+            </div>
+
+            {hasFilters && (
+              <button
+                onClick={clearFilters}
+                className="text-xs font-semibold text-rose-600 hover:underline flex items-center gap-1"
+              >
+                <RotateCcw size={13} /> Xóa bộ lọc
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 3. APPLICANTS TABLE */}
+      <div className="employer-results-panel">
+        <div className="table-container">
+          <table className="table">
+            <thead>
+              <tr>
+                <th className="w-60">Ứng viên</th>
+                <th>Vị trí ứng tuyển</th>
+                <th>Kỹ năng</th>
+                <th>Match Score</th>
+                <th>Ngày nộp</th>
+                <th>Trạng thái</th>
+                <th className="text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredApps.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-12 text-slate-400 text-xs">
+                    Không tìm thấy ứng viên nào phù hợp với bộ lọc hiện tại.
+                  </td>
+                </tr>
+              ) : (
+                filteredApps.map(app => {
+                  const job = jobs.find(j => j.id === app.jobId) || jobs[0];
+                  const appSkills = app.candidateSkills || candidateProfile.skills;
+                  const match = calculateSkillMatch(appSkills, job.requiredSkills);
+
+                  return (
+                    <tr key={app.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td data-label="Ứng viên">
+                        <div
+                          onClick={() => setDrawerApplicant({ app, job, match })}
+                          className="flex items-center gap-3 cursor-pointer group"
+                        >
+                          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs overflow-hidden shrink-0 border border-blue-200">
+                            {app.candidateName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 text-xs group-hover:text-blue-600 transition-colors truncate">
+                              {app.candidateName}
+                            </p>
+                            <p className="text-[11px] text-slate-500 truncate">{app.candidateUniversity || app.candidateEmail}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td data-label="Vị trí ứng tuyển" className="font-semibold text-slate-800 text-xs max-w-[180px] truncate">{job.title}</td>
+                      <td data-label="Kỹ năng">
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {appSkills.slice(0, 3).map(sk => (
+                            <span key={sk} className="skill-tag text-[10px] py-0.5 px-1.5">{sk}</span>
+                          ))}
+                        </div>
+                      </td>
+                      <td data-label="Độ phù hợp">
+                        <MatchBadge showIcon={false} score={match.percentage} label={match.label} badgeClass={match.badgeClass} />
+                      </td>
+                      <td data-label="Ngày nộp" className="text-xs text-slate-500 whitespace-nowrap">{app.appliedDate}</td>
+                      <td data-label="Trạng thái">
+                        <select
+                          className={`form-control py-1 px-2 text-xs font-semibold rounded-lg border ${
+                            app.status === 'Offer'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                              : app.status === 'Phỏng vấn'
+                              ? 'bg-indigo-50 text-indigo-700 border-indigo-300'
+                              : app.status === 'Từ chối'
+                              ? 'bg-rose-50 text-rose-700 border-rose-300'
+                              : 'bg-blue-50 text-blue-700 border-blue-300'
+                          }`}
+                          value={app.status}
+                          onChange={e => {
+                            const newSt = e.target.value;
+                            if (newSt === 'Phỏng vấn') {
+                              setActiveInterviewAppId(app.id);
+                            } else {
+                              updateApplicationStatus(app.id, newSt);
+                            }
+                          }}
+                        >
+                          <option value="Đã nộp">Đã nộp</option>
+                          <option value="Đã xem">Đã xem</option>
+                          <option value="Phỏng vấn">Phỏng vấn</option>
+                          <option value="Offer">Offer</option>
+                          <option value="Từ chối">Từ chối</option>
+                        </select>
+                      </td>
+                      <td data-label="Thao tác" className="text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setViewingCVModalCandidate({ ...app, match, job, candidateId: app.candidateId })}
+                            className="btn btn-secondary btn-sm text-xs font-semibold"
+                            title="Xem chi tiết hồ sơ và CV ứng viên"
+                          >
+                            <FileText size={13} /> Hồ sơ & CV
+                          </button>
+                          <button
+                            onClick={() => setActiveInterviewAppId(app.id)}
+                            className="btn btn-primary btn-sm text-xs font-bold"
+                            title="Lên lịch phỏng vấn"
+                          >
+                            <Calendar size={13} /> Lịch PV
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 4. CANDIDATE SIDE DRAWER / DETAIL MODAL */}
+      {drawerApplicant && (
+        <Modal
+          isOpen={!!drawerApplicant}
+          onClose={() => setDrawerApplicant(null)}
+          title={`Hồ sơ chi tiết Ứng viên - ${drawerApplicant.app.candidateName}`}
+        >
+          <div className="space-y-5 text-xs">
+            {/* Candidate Header Card */}
+            <div className="p-4 bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl shadow-md flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-white text-blue-700 font-black text-lg flex items-center justify-center border-2 border-white shadow-sm overflow-hidden shrink-0">
+                  {drawerApplicant.app.candidateName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold">{drawerApplicant.app.candidateName}</h3>
+                  <p className="text-xs text-slate-300 mt-0.5">{drawerApplicant.app.candidateUniversity} • {drawerApplicant.app.candidateEmail}</p>
+                </div>
+              </div>
+              <MatchBadge showIcon={false} score={drawerApplicant.match.percentage} label={drawerApplicant.match.label} badgeClass={drawerApplicant.match.badgeClass} />
+            </div>
+
+            {/* Application Meta */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-2 gap-3 text-slate-700">
+              <p>Vị trí ứng tuyển: <strong>{drawerApplicant.job.title}</strong></p>
+              <p>Ngày nộp hồ sơ: <strong>{drawerApplicant.app.appliedDate}</strong></p>
+              <p>Trạng thái hiện tại: <strong className="text-blue-600">{drawerApplicant.app.status}</strong></p>
+              <p>Lương kỳ vọng: <strong>8.000.000 - 12.000.000 VNĐ</strong></p>
+            </div>
+
+            {/* Matched vs Missing Skills breakdown */}
+            <div className="space-y-3 p-4 bg-white border border-slate-200 rounded-xl">
+              <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Phân tích kỹ năng so khớp Level 1</h4>
+
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                  <Check size={14} /> Kỹ năng đã đáp ứng ({drawerApplicant.match.matchedSkills.length}):
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {drawerApplicant.match.matchedSkills.map(sk => (
+                    <span key={sk} className="skill-chip skill-chip-emerald">✓ {sk}</span>
+                  ))}
+                </div>
+              </div>
+
+              {drawerApplicant.match.missingSkills.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <p className="text-[11px] font-bold text-amber-700 flex items-center gap-1">
+                    <AlertTriangle size={14} /> Kỹ năng còn thiếu ({drawerApplicant.match.missingSkills.length}):
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {drawerApplicant.match.missingSkills.map(sk => (
+                      <span key={sk} className="skill-chip skill-chip-amber">! {sk}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Drawer Action CTAs */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
+              <button
+                onClick={() => {
+                  setDrawerApplicant(null);
+                  setViewingCVModalCandidate(drawerApplicant.app);
+                }}
+                className="btn btn-secondary text-xs font-semibold"
+              >
+                <FileText size={14} /> Xem PDF CV
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    updateApplicationStatus(drawerApplicant.app.id, 'Từ chối');
+                    setDrawerApplicant(null);
+                  }}
+                  className="btn btn-danger text-xs font-bold"
+                >
+                  <XCircle size={14} /> Từ chối
+                </button>
+                <button
+                  onClick={() => {
+                    const id = drawerApplicant.app.id;
+                    setDrawerApplicant(null);
+                    setActiveInterviewAppId(id);
+                  }}
+                  className="btn btn-primary text-xs font-bold"
+                >
+                  <Calendar size={14} /> Mời Phỏng vấn
+                </button>
+                <button
+                  onClick={() => {
+                    updateApplicationStatus(drawerApplicant.app.id, 'Offer');
+                    setDrawerApplicant(null);
+                    showToast('Đã chuyển trạng thái ứng viên sang OFFER!', 'success');
+                  }}
+                  className="btn btn-success text-xs font-bold"
+                >
+                  <Award size={14} /> Gửi Offer
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* SCHEDULE INTERVIEW MODAL */}
+      {activeInterviewAppId && (
+        <ScheduleInterviewModal
+          appId={activeInterviewAppId}
+          onClose={() => setActiveInterviewAppId(null)}
+        />
+      )}
+    </div>
+  );
+}
+
