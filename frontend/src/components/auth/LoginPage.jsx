@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { CircleHelp, Lock, AlertCircle, CheckCircle2, Loader2, ShieldCheck, User, Building, Mail, Phone, KeyRound } from 'lucide-react';
+import { CircleHelp, Lock, AlertCircle, CheckCircle2, Loader2, ShieldCheck, User, Building, Mail, Phone, KeyRound, FileText, Upload } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { HeroVideo } from '../common/HeroVideo';
 import './LoginPage.css';
@@ -25,6 +25,7 @@ export function LoginPage() {
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regCompanyName, setRegCompanyName] = useState('');
+  const [regLicenseFile, setRegLicenseFile] = useState(null);
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
 
@@ -149,10 +150,17 @@ export function LoginPage() {
       return;
     }
 
-    if (regRole === 'EMPLOYER' && !regCompanyName.trim()) {
-      setIsLoading(false);
-      setErrorMessage('Vui lòng nhập tên công ty.');
-      return;
+    if (regRole === 'EMPLOYER') {
+      if (!regCompanyName.trim()) {
+        setIsLoading(false);
+        setErrorMessage('Vui lòng nhập tên công ty.');
+        return;
+      }
+      if (!regLicenseFile) {
+        setIsLoading(false);
+        setErrorMessage('Vui lòng tải lên Giấy phép kinh doanh (PDF, PNG hoặc JPG).');
+        return;
+      }
     }
 
     try {
@@ -192,10 +200,7 @@ export function LoginPage() {
         formData.append('confirmPassword', regConfirmPassword);
         formData.append('phone', phoneDigits);
         formData.append('location', 'Hà Nội');
-
-        // Create sample business license file if not uploaded
-        const sampleLicense = new Blob(["Giấy phép kinh doanh hợp lệ"], { type: 'text/plain' });
-        formData.append('licenseFile', sampleLicense, 'GPKD_sample.pdf');
+        formData.append('licenseFile', regLicenseFile);
 
         const res = await fetch(`${BACKEND_URL}/api/auth/register/employer`, {
           method: 'POST',
@@ -408,22 +413,59 @@ export function LoginPage() {
                   </div>
 
                   {regRole === 'EMPLOYER' && (
-                    <div className="auth-field">
-                      <label htmlFor="register-company">Tên công ty *</label>
-                      <div className="auth-input-wrapper">
-                        <Building size={16} className="auth-input-icon" aria-hidden="true" />
-                        <input
-                          id="register-company"
-                          name="companyName"
-                          data-testid="register-company"
-                          type="text"
-                          required
-                          placeholder="FPT Software, Viettel..."
-                          value={regCompanyName}
-                          onChange={(e) => setRegCompanyName(e.target.value)}
-                        />
+                    <>
+                      <div className="auth-field">
+                        <label htmlFor="register-company">Tên công ty *</label>
+                        <div className="auth-input-wrapper">
+                          <Building size={16} className="auth-input-icon" aria-hidden="true" />
+                          <input
+                            id="register-company"
+                            name="companyName"
+                            data-testid="register-company"
+                            type="text"
+                            required
+                            placeholder="FPT Software, Viettel..."
+                            value={regCompanyName}
+                            onChange={(e) => setRegCompanyName(e.target.value)}
+                          />
+                        </div>
                       </div>
-                    </div>
+
+                      <div className="auth-field">
+                        <label htmlFor="register-license">Giấy phép kinh doanh (PDF, PNG, JPG) *</label>
+                        <div className="auth-file-wrapper">
+                          <input
+                            id="register-license"
+                            name="licenseFile"
+                            data-testid="register-license"
+                            type="file"
+                            accept=".pdf,.png,.jpg,.jpeg"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                if (!/\.(pdf|png|jpe?g)$/i.test(file.name)) {
+                                  setErrorMessage('Vui lòng chọn tệp định dạng PDF, PNG hoặc JPG.');
+                                  setRegLicenseFile(null);
+                                  return;
+                                }
+                                if (file.size > 10 * 1024 * 1024) {
+                                  setErrorMessage('Dung lượng tệp không được vượt quá 10 MB.');
+                                  setRegLicenseFile(null);
+                                  return;
+                                }
+                                setErrorMessage('');
+                                setRegLicenseFile(file);
+                              }
+                            }}
+                          />
+                          {regLicenseFile && (
+                            <span className="auth-file-selected" data-testid="selected-license-name">
+                              <FileText size={14} /> {regLicenseFile.name} ({(regLicenseFile.size / 1024).toFixed(1)} KB)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   <div className="auth-field">
