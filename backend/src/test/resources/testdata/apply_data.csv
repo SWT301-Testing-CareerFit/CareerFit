@@ -1,0 +1,7 @@
+tcId,jobId,jobTitle,candidateEmail,candidatePassword,action,expectedStatus,expectedMessage
+TC-APP-E2E,job-4,C# / .NET Developer Fresher,candidate@gmail.com,123456,E2E,SUCCESS,Toàn trình chuyển đổi trạng thái
+TC-APP-005,job-4,C# / .NET Developer Fresher,candidate@gmail.com,123456,APPLY,APPLIED,Ứng tuyển thành công! Nhà tuyển dụng đã nhận hồ sơ của bạn.
+TC-APP-008,job-4,C# / .NET Developer Fresher,candidate@gmail.com,123456,CANCEL,UNAPPLIED,Đã hủy đơn ứng tuyển thành công.
+TC-APP-010,job-4,C# / .NET Developer Fresher,candidate@gmail.com,123456,SAVE,SAVED,Đã lưu tin
+TC-APP-011,job-4,C# / .NET Developer Fresher,candidate@gmail.com,123456,UNSAVE,UNSAVED,Lưu tin
+TC-APP-006,job-2,Java Backend Intern / Fresher,candidate@gmail.com,123456,DUPLICATE,ALREADY_APPLIED,Bạn đã nộp đơn ứng tuyển cho công việc này rồi!
