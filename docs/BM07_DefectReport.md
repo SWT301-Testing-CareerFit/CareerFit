@@ -79,7 +79,7 @@ Nhóm áp dụng vòng đời xử lý lỗi chuẩn ISTQB:
   Do tài khoản `candidate@gmail.com` vừa có trong `INITIAL_USERS_DB` vừa có trong `usersDB`, mảng `allUsers` bị trùng lặp 2 bản ghi cho cùng 1 email. Hàm tìm kiếm `candidateList` trả về độ dài $> 1$, kích hoạt điều kiện cảnh báo trùng lặp tài khoản.
 * **Giải pháp khắc phục:** Sử dụng cấu trúc `Map` để deduplicate danh sách người dùng theo `(u.id || u.email).toLowerCase()` trước khi lọc.
 * **Kết quả kiểm thử lại (RUN-02 Re-testing):** **PASS** (100% các kịch bản đăng nhập ứng viên chạy thành công).
-* **Bằng chứng kiểm thử (Evidence):** Ảnh chụp màn hình lỗi lưu tại `docs/reports/test_fail_center.png`.
+* **Bằng chứng kiểm thử (Evidence):** Ảnh chụp màn hình lỗi lưu tại `docs/reports/screenshots/test_fail_center.png`.
 * **Trạng thái:** **CLOSED**
 
 ---
@@ -101,7 +101,7 @@ Nhóm áp dụng vòng đời xử lý lỗi chuẩn ISTQB:
   Trong `frontend/src/context/AppContext.jsx`, hàm `setCurrentUser` chỉ cập nhật biến trạng thái React (`useState`, `userRef`) mà không thực hiện đồng bộ `localStorage.setItem('careerfit_current_user', JSON.stringify(next))`. Khi trình duyệt reload hoặc mở trang mới, state React bị reset về `null`.
 * **Giải pháp khắc phục:** Bổ sung cơ chế ghi và xóa `careerfit_current_user` trong `localStorage` mỗi khi `setCurrentUser` được kích hoạt.
 * **Kết quả kiểm thử lại (RUN-02 Re-testing):** **PASS** (Kịch bản điều hướng trực tiếp giữa các trang trong `ApplicationTest` hoạt động trơn tru).
-* **Bằng chứng kiểm thử (Evidence):** Ảnh chụp màn hình lưu tại `docs/reports/m4_test_result.png`.
+* **Bằng chứng kiểm thử (Evidence):** Ảnh chụp màn hình lưu tại `docs/reports/screenshots/m4_test_result.png`.
 * **Trạng thái:** **CLOSED**
 
 ---
@@ -165,7 +165,7 @@ Nhóm áp dụng vòng đời xử lý lỗi chuẩn ISTQB:
 * **Actual Result (Thực tế):** Giao diện văng thông báo lỗi kỹ thuật: *"Failed to fetch"*, ngăn chặn toàn bộ người dùng mới tham gia nền tảng khi backend port 8080 chưa sẵn sàng.
 * **Phân tích nguyên nhân gốc rễ (Root Cause Analysis):**  
   Trong `frontend/src/components/auth/LoginPage.jsx`, hàm `handleManualRegister` gửi `fetch('/api/v1/auth/register')` nhưng khối `catch (err)` không có cơ chế fallback lưu trữ cục bộ (`localStorage` / `usersDB`) như luồng Đăng nhập, đồng thời không chuyển đổi ngoại lệ mạng thành thông báo tiếng Việt rõ nghĩa.
-* **Bằng chứng kiểm thử (Evidence):** Ảnh chụp màn hình lỗi lưu tại `docs/reports/RegisterTest_*.png`.
+* **Bằng chứng kiểm thử (Evidence):** Ảnh chụp màn hình lỗi lưu tại `docs/reports/screenshots/RegisterTest_*.png`.
 * **Trạng thái:** **OPEN** (Đã phân loại và chuyển giao cho Framework Owner Võ Nguyên Khánh xử lý).
 
 ---

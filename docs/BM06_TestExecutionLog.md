@@ -57,7 +57,7 @@ Toàn bộ các chu kỳ kiểm thử được thực thi trong môi trường c
 | **Tỷ lệ thành công (Pass Rate)** | **89.8%** | **91.5%** | **Tăng +1.7%**, hệ thống đạt độ ổn định cao |
 | **Thời gian thực thi tổng** | 06:26 min (386s) | 07:04 min (424s) | Thời gian bao gồm khởi chạy trình duyệt thật |
 | **Số lượng ảnh chụp lỗi sinh ra** | 7 ảnh PNG | 5 ảnh PNG | Lưu trữ tại `docs/reports/screenshots/` |
-| **Báo cáo HTML sinh ra** | Chưa xuất | `surefire.html` (67.3 KB) | Lưu trữ tại `docs/reports/surefire.html` |
+| **Báo cáo HTML sinh ra** | Chưa xuất | `surefire-report.html` (67.3 KB) | Lưu trữ tại `docs/reports/surefire-report.html` |
 
 > [!NOTE]
 > Sự khác biệt giữa **RUN-01** và **RUN-02** nằm ở việc đội ngũ kiểm thử đã xác định và khắc phục ngay một lỗi kỹ thuật (flaky script) trong `ScreenshotOnFailure.java` (lỗi NullPointerException khi gọi ExtensionContext giả lập). Bước vào **RUN-02**, 100% các ca Fail/Error còn lại đều là **Lỗi thực tế của phần mềm (SUT Defects)** đã được định danh và đối chiếu với GitHub Issues.
@@ -118,7 +118,7 @@ Toàn bộ các ca thất bại trong kiểm thử tự động đã được ch
 Tất cả các tệp minh chứng kết quả kiểm thử hồi quy được đóng gói và lưu trữ chính thức trong kho lưu trữ mã nguồn tại:
 
 * 📄 **Báo cáo Surefire Report HTML đầy đủ:**  
-  `docs/reports/surefire.html` *(kèm toàn bộ thư mục tài nguyên `css/`, `fonts/`, `images/`, `js/` độc lập, có thể mở trực tiếp trên mọi trình duyệt mà không cần kết nối mạng).*
+  `docs/reports/surefire-report.html` *(kèm toàn bộ thư mục tài nguyên `css/`, `fonts/`, `images/`, `js/` độc lập, có thể mở trực tiếp trên mọi trình duyệt mà không cần kết nối mạng).*
 * 🖼️ **Thư mục ảnh chụp màn hình bằng chứng lỗi tự động:**  
   `docs/reports/screenshots/`
 * 📝 **File log thô chi tiết từ Maven Surefire XML:**  
