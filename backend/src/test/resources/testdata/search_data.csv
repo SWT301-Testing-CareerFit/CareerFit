@@ -1,0 +1,12 @@
+tcId,keyword,location,expectedResult,expectedNote
+TC-SEARCH-001,Java,,FOUND,Khớp từ khóa công nghệ Java
+TC-SEARCH-002,React,,FOUND,Khớp từ khóa công nghệ React
+TC-SEARCH-003,Frontend,,FOUND,Khớp vị trí chuyên môn Frontend
+TC-SEARCH-004,,Hà Nội,FOUND,Lọc công việc tại Hà Nội
+TC-SEARCH-005,xyz999_non_existent,,EMPTY,Từ khóa không tồn tại hiển thị Empty State
+TC-SEARCH-006,,,FOUND,Từ khóa rỗng tải lại toàn bộ công việc khả dụng
+TC-SEARCH-007,<script>alert(1)</script>,,EMPTY_OR_SAFE,XSS Injection an toàn không bị thực thi script
+TC-SEARCH-008,' OR 1=1 --,,EMPTY_OR_SAFE,SQL Injection an toàn không gây lỗi máy chủ 500
+TC-SEARCH-009,RESET,RESET,RESET,Khôi phục bộ lọc về mặc định
+TC-SEARCH-010,@#$%^&*(),,EMPTY_OR_SAFE,Ký tự đặc biệt an toàn không làm crash giao diện
+TC-SEARCH-011,Đà Nẵng,,FOUND,Tìm kiếm tiếng Việt có dấu

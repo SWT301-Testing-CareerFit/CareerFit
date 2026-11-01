@@ -2,6 +2,8 @@ package com.careerfit.automation.base;
 
 import com.careerfit.automation.utils.ConfigReader;
 import org.openqa.selenium.By;
+import org.openqa.selenium.ElementClickInterceptedException;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -43,11 +45,41 @@ public abstract class BasePage {
 
     /**
      * Waits until the element is clickable and performs a click.
+     * Uses scroll into view if click is intercepted by overlays or viewport bounds.
      *
      * @param locator the element locator
      */
     public void click(By locator) {
-        wait.until(ExpectedConditions.elementToBeClickable(locator)).click();
+        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
+        try {
+            element.click();
+        } catch (ElementClickInterceptedException e) {
+            if (driver instanceof JavascriptExecutor) {
+                ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block: 'center', inline: 'center'});", element);
+                try {
+                    element.click();
+                } catch (Exception ex) {
+                    ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+                }
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Clicks the element directly via JavaScript executor.
+     * Bypasses viewport boundary, overlay, and SVG child intercept issues.
+     *
+     * @param locator the element locator
+     */
+    public void clickJS(By locator) {
+        WebElement element = waitVisible(locator);
+        if (driver instanceof JavascriptExecutor) {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block: 'center', inline: 'center'}); arguments[0].click();", element);
+        } else {
+            element.click();
+        }
     }
 
     /**
@@ -76,7 +108,7 @@ public abstract class BasePage {
     }
 
     /**
-     * Checks if the element is displayed using explicit wait.
+     * Checks if the element is displayed using default explicit wait.
      *
      * @param locator the element locator
      * @return true if visible within timeout, false otherwise
@@ -84,6 +116,24 @@ public abstract class BasePage {
     public boolean isDisplayed(By locator) {
         try {
             return waitVisible(locator).isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Checks if the element is displayed using a specified timeout.
+     * Useful for checking negative presence without long delays.
+     *
+     * @param locator the element locator
+     * @param timeout custom wait duration
+     * @return true if visible within timeout, false otherwise
+     */
+    public boolean isDisplayed(By locator, Duration timeout) {
+        try {
+            return new WebDriverWait(driver, timeout)
+                    .until(ExpectedConditions.visibilityOfElementLocated(locator))
+                    .isDisplayed();
         } catch (Exception e) {
             return false;
         }
