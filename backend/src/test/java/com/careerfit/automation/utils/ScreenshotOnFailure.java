@@ -24,7 +24,7 @@ import java.util.Optional;
  * upon test assertion failure and saves it into target/screenshots/.
  *
  * Implements both TestWatcher and AfterTestExecutionCallback so that screenshots
- * are taken while browser is active, and compatible with SampleFrameworkTest.
+ * are taken while browser is active, and compatible across all test runners.
  */
 public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallback {
 
@@ -32,15 +32,15 @@ public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallb
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS");
 
     @Override
-    public void testFailed(ExtensionContext context, Throwable cause) {
-        captureScreenshot(context);
-    }
-
-    @Override
     public void afterTestExecution(ExtensionContext context) {
         if (context.getExecutionException().isPresent()) {
             captureScreenshot(context);
         }
+    }
+
+    @Override
+    public void testFailed(ExtensionContext context, Throwable cause) {
+        captureScreenshot(context);
     }
 
     private synchronized void captureScreenshot(ExtensionContext context) {
@@ -77,6 +77,8 @@ public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallb
             Files.copy(tempScreenshot.toPath(), targetFile, StandardCopyOption.REPLACE_EXISTING);
             context.getStore(ExtensionContext.Namespace.GLOBAL).put(flagKey, true);
             System.out.println("[ScreenshotOnFailure] Test failed! Screenshot saved to: " + targetFile.toAbsolutePath());
+        } catch (IOException e) {
+            System.err.println("[ScreenshotOnFailure] Failed to write screenshot to disk: " + e.getMessage());
         } catch (Exception ignored) {
             // Silently ignore if session already quit
         }

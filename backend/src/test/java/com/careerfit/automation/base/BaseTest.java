@@ -30,7 +30,7 @@ public abstract class BaseTest {
 
         // Configure ChromeOptions
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--window-size=1366,768");
+        options.addArguments("--window-size=1920,1080");
         options.addArguments("--remote-allow-origins=*");
 
         if (ConfigReader.isHeadless()) {

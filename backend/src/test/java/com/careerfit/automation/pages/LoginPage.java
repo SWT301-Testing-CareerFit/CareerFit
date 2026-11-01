@@ -87,6 +87,11 @@ public class LoginPage extends BasePage {
         enterEmail(email);
         enterPassword(password);
         clickSubmit();
+        try {
+            wait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+        } catch (Exception ignored) {
+            // In case of login error, remains on /login
+        }
     }
 
     /**
