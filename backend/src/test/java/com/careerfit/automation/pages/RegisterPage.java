@@ -47,10 +47,25 @@ public class RegisterPage extends BasePage {
      */
     public RegisterPage open(String baseUrl) {
         driver.get(baseUrl + "/login");
+        ensurePageLoaded();
         injectCandidateLevelCompatibility();
         clickRegisterTab();
         waitVisible(registerFullName);
         return this;
+    }
+
+    /**
+     * Ensures login page and tab switcher are properly rendered.
+     * If Vite dev server experiences preamble lag/blank page, auto-reloads.
+     */
+    private void ensurePageLoaded() {
+        try {
+            waitVisible(tabRegister);
+        } catch (Exception e) {
+            // Self-healing: reload in case of Vite dev-server preamble blank screen
+            driver.navigate().refresh();
+            waitVisible(tabRegister);
+        }
     }
 
     /**
@@ -61,11 +76,21 @@ public class RegisterPage extends BasePage {
     public RegisterPage clickRegisterTab() {
         WebElement tab = waitVisible(tabRegister);
         scrollIntoView(tab);
-        try {
-            wait.until(ExpectedConditions.elementToBeClickable(tab)).click();
-        } catch (Exception e) {
-            jsClick(tab);
-        }
+        wait.until(d -> {
+            WebElement el = d.findElement(tabRegister);
+            if ("true".equalsIgnoreCase(el.getAttribute("aria-selected"))) {
+                return true;
+            }
+            try {
+                el.click();
+            } catch (Exception e) {
+                jsClick(el);
+            }
+            if (!"true".equalsIgnoreCase(el.getAttribute("aria-selected"))) {
+                jsClick(el);
+            }
+            return "true".equalsIgnoreCase(el.getAttribute("aria-selected"));
+        });
         return this;
     }
 
@@ -80,20 +105,31 @@ public class RegisterPage extends BasePage {
             return this;
         }
         String normalized = role.trim().toUpperCase();
-        By targetLocator = ("EMPLOYER".equals(normalized) || "DOANH_NGHIEP".equals(normalized) || "NHÀ TUYỂN DỤNG".equals(normalized))
-                ? roleEmployer
-                : roleCandidate;
+        boolean isEmployer = "EMPLOYER".equals(normalized) || "DOANH_NGHIEP".equals(normalized) || "NHÀ TUYỂN DỤNG".equals(normalized);
+        By targetLocator = isEmployer ? roleEmployer : roleCandidate;
 
         WebElement roleBtn = waitVisible(targetLocator);
         scrollIntoView(roleBtn);
-        try {
-            wait.until(ExpectedConditions.elementToBeClickable(roleBtn)).click();
-        } catch (Exception e) {
-            jsClick(roleBtn);
-        }
+        wait.until(d -> {
+            WebElement el = d.findElement(targetLocator);
+            if ("true".equalsIgnoreCase(el.getAttribute("aria-checked"))) {
+                return true;
+            }
+            try {
+                el.click();
+            } catch (Exception e) {
+                jsClick(el);
+            }
+            if (!"true".equalsIgnoreCase(el.getAttribute("aria-checked"))) {
+                jsClick(el);
+            }
+            return "true".equalsIgnoreCase(el.getAttribute("aria-checked"));
+        });
 
-        if ("EMPLOYER".equals(normalized) || "DOANH_NGHIEP".equals(normalized) || "NHÀ TUYỂN DỤNG".equals(normalized)) {
+        if (isEmployer) {
             waitVisible(registerCompany);
+        } else {
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(registerCompany));
         }
         return this;
     }
