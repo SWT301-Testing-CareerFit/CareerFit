@@ -44,14 +44,14 @@ public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallb
     }
 
     private synchronized void captureScreenshot(ExtensionContext context) {
+        ExtensionContext.Store store = null;
+        try {
+            store = context.getStore(ExtensionContext.Namespace.GLOBAL);
+        } catch (Exception ignored) {}
         // Prevent duplicate screenshot if already taken in this context
         String flagKey = "screenshot_taken_" + context.getUniqueId();
-        try {
-            var store = context.getStore(ExtensionContext.Namespace.GLOBAL);
-            if (store != null && store.get(flagKey) != null) {
-                return;
-            }
-        } catch (Exception ignored) {
+        if (store != null && store.get(flagKey) != null) {
+            return;
         }
 
         WebDriver driver = resolveDriver(context);
@@ -79,13 +79,7 @@ public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallb
             Path targetFile = destinationDir.resolve(fileName);
 
             Files.copy(tempScreenshot.toPath(), targetFile, StandardCopyOption.REPLACE_EXISTING);
-            try {
-                var store = context.getStore(ExtensionContext.Namespace.GLOBAL);
-                if (store != null) {
-                    store.put(flagKey, true);
-                }
-            } catch (Exception ignored) {
-            }
+            if (store != null) { store.put(flagKey, true); }
             System.out.println("[ScreenshotOnFailure] Test failed! Screenshot saved to: " + targetFile.toAbsolutePath());
         } catch (IOException e) {
             System.err.println("[ScreenshotOnFailure] Failed to write screenshot to disk: " + e.getMessage());
