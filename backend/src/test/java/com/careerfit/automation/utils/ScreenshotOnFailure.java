@@ -1,6 +1,7 @@
 package com.careerfit.automation.utils;
 
 import com.careerfit.automation.base.BaseTest;
+import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
 import org.openqa.selenium.OutputType;
@@ -21,23 +22,41 @@ import java.util.Optional;
 /**
  * JUnit 5 Extension that automatically captures a browser screenshot
  * upon test assertion failure and saves it into target/screenshots/.
+ *
+ * Implements both TestWatcher and AfterTestExecutionCallback so that screenshots
+ * are taken while browser is active, and compatible with SampleFrameworkTest.
  */
-public class ScreenshotOnFailure implements TestWatcher {
+public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallback {
 
     private static final String SCREENSHOT_DIR = "target/screenshots";
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS");
 
     @Override
     public void testFailed(ExtensionContext context, Throwable cause) {
+        captureScreenshot(context);
+    }
+
+    @Override
+    public void afterTestExecution(ExtensionContext context) {
+        if (context.getExecutionException().isPresent()) {
+            captureScreenshot(context);
+        }
+    }
+
+    private synchronized void captureScreenshot(ExtensionContext context) {
+        // Prevent duplicate screenshot if already taken in this context
+        String flagKey = "screenshot_taken_" + context.getUniqueId();
+        if (context.getStore(ExtensionContext.Namespace.GLOBAL).get(flagKey) != null) {
+            return;
+        }
+
         WebDriver driver = resolveDriver(context);
 
         if (driver == null) {
-            System.err.println("[ScreenshotOnFailure] Cannot capture screenshot: WebDriver instance is null.");
             return;
         }
 
         if (!(driver instanceof TakesScreenshot)) {
-            System.err.println("[ScreenshotOnFailure] WebDriver instance does not support TakesScreenshot.");
             return;
         }
 
@@ -56,11 +75,10 @@ public class ScreenshotOnFailure implements TestWatcher {
             Path targetFile = destinationDir.resolve(fileName);
 
             Files.copy(tempScreenshot.toPath(), targetFile, StandardCopyOption.REPLACE_EXISTING);
+            context.getStore(ExtensionContext.Namespace.GLOBAL).put(flagKey, true);
             System.out.println("[ScreenshotOnFailure] Test failed! Screenshot saved to: " + targetFile.toAbsolutePath());
-        } catch (IOException e) {
-            System.err.println("[ScreenshotOnFailure] Failed to write screenshot to disk: " + e.getMessage());
-        } catch (Exception e) {
-            System.err.println("[ScreenshotOnFailure] Error capturing screenshot: " + e.getMessage());
+        } catch (Exception ignored) {
+            // Silently ignore if session already quit
         }
     }
 
