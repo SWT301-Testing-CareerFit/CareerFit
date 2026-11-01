@@ -1266,7 +1266,10 @@ export function AppProvider({ children }) {
 
     let user = null;
 
-    const allUsers = [...usersDB, ...INITIAL_USERS_DB];
+    // Deduplicate allUsers by user id to prevent duplicate matching
+    const userMap = new Map();
+    [...INITIAL_USERS_DB, ...usersDB].forEach(u => { if (u && u.id) userMap.set(u.id, u); });
+    const allUsers = Array.from(userMap.values());
 
     const candidateList = allUsers.filter(u => 
 

@@ -98,7 +98,13 @@ export function LoginPage() {
       // Fallback to local context logic if backend connection fails
       const fallback = login ? login(cleanIdentifier, loginPassword) : null;
       if (fallback && fallback.success) {
+        setErrorMessage('');
         showToast('Đăng nhập thành công!', 'success');
+        const user = fallback.user;
+        const targetPage = user?.role === 'EMPLOYER' 
+          ? 'employer-dashboard' 
+          : (user?.role === 'ADMIN' ? 'admin-dashboard' : 'candidate-dashboard');
+        setActivePage(targetPage);
       } else {
         const errorText = (fallback && fallback.message) || err.message || 'Đăng nhập không thành công.';
         setErrorMessage(errorText);
