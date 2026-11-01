@@ -2,16 +2,16 @@
 
 **Dự án:** CareerFit – Hệ thống Kết nối Tuyển dụng Thông minh  
 **Môn học:** SWT301 – Software Testing (Đại học FPT)  
-**Tác giả (Test Lead):** Nguyễn Lâm Thi (`nguyenlamthi`)  
-**Phiên bản:** 1.0 | **Ngày cập nhật:** 01/11/2026  
+**Tác giả:** Nguyễn Lâm Thi (Test Lead - M1), Võ Nguyên Khánh (Framework Owner / Tester - M2)  
+**Phiên bản:** 1.1 | **Ngày cập nhật:** 01/11/2026  
 
 ---
 
 ## 1. MỤC TIÊU MA TRẬN RTM
 
 Ma trận truy vết (RTM) đảm bảo:
-1. Mọi quy tắc nghiệp vụ (**Business Rules - BR**) trong phạm vi kiểm thử đều có ít nhất 1 **Test Condition (TCOND)** và 1 **Test Case (TC)** tương ứng (100% Coverage).
-2. Xác định rõ tỷ lệ tự động hóa (**Automation Coverage**) trên từng quy tắc.
+1. Mọi quy tắc nghiệp vụ (**Business Rules - BR**) trong phạm vi kiểm thử đều có ít nhất 1 **Test Condition (TCOND)** và 1 **Test Case (TC)** tương ứng (**100% Requirement Coverage**).
+2. Xác định rõ tỷ lệ tự động hóa (**Automation Coverage**) trên từng quy tắc nghiệp vụ.
 3. Liên kết hai chiều: Từ yêu cầu/quy tắc -> Test Case -> Kết quả chạy thực tế / Defect.
 
 ---
@@ -30,13 +30,30 @@ Ma trận truy vết (RTM) đảm bảo:
 
 ---
 
-## 3. KHUNG MA TRẬN CHO CÁC MODULE TIẾP THEO
+## 3. MA TRẬN TRUY VẾT MODULE 2 (M2): ĐĂNG KÝ TÀI KHOẢN (REGISTRATION)
 
-*(Võ Nguyên Khánh - M2, Nguyễn Trọng Tiến - M3, Lã Trọng Huy - M4 sẽ điền bổ sung khi hoàn thành thiết kế Test Cases)*
+* **Người phụ trách:** Võ Nguyên Khánh (`richnk123a-cyber` / `VoNguyenKhanh`)
+* **Sheet tương ứng trong BM03:** `M2_Register`
+
+| BR ID | Mô tả Business Rule | Test Condition ID | Danh sách Test Cases (TC IDs) | Tổng số TC | Số TC Tự động | Pass | Fail | Not Run | Độ bao phủ (Coverage) |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **RULE-REG-01** | Định dạng Email hợp lệ (`local@domain.tld`), chặn email sai định dạng | `TCOND-REG-01`<br>`TCOND-REG-02` | `TC-REG-001`<br>`TC-REG-012` | 2 | 2 (100%) | 0 | 0 | 2 | **100%** |
+| **RULE-REG-02** | Tính duy nhất của Email (chặn đăng ký email đã tồn tại trong DB) | `TCOND-REG-03`<br>`TCOND-REG-04` | `TC-REG-001`<br>`TC-REG-013` | 2 | 2 (100%) | 0 | 0 | 2 | **100%** |
+| **RULE-REG-03** | Mật khẩu chuẩn BVA [8, 32] ký tự và độ phức tạp (chữ hoa, số, ký tự đặc biệt) | `TCOND-REG-05`<br>`TCOND-REG-06`<br>`TCOND-REG-07`<br>`TCOND-REG-08`<br>`TCOND-REG-09`<br>`TCOND-REG-10`<br>`TCOND-REG-11` | `TC-REG-004`<br>`TC-REG-005`<br>`TC-REG-006`<br>`TC-REG-007`<br>`TC-REG-008`<br>`TC-REG-009`<br>`TC-REG-010` | 7 | 7 (100%) | 0 | 0 | 7 | **100%** |
+| **RULE-REG-04** | Xác nhận mật khẩu phải trùng khớp 100% (Case-sensitive) | `TCOND-REG-12`<br>`TCOND-REG-13` | `TC-REG-001`<br>`TC-REG-011` | 2 | 2 (100%) | 0 | 0 | 2 | **100%** |
+| **RULE-REG-05** | Họ tên / Người đại diện bắt buộc, dài 2-100 ký tự, chặn XSS/Script | `TCOND-REG-14`<br>`TCOND-REG-15` | `TC-REG-001`<br>`TC-REG-017` | 2 | 2 (100%) | 0 | 0 | 2 | **100%** |
+| **RULE-REG-06** | Số điện thoại di động VN gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09 | `TCOND-REG-16`<br>`TCOND-REG-17` | `TC-REG-001`<br>`TC-REG-014` | 2 | 2 (100%) | 0 | 0 | 2 | **100%** |
+| **RULE-REG-07** | Doanh nghiệp bắt buộc tên công ty & upload GPKD (PDF/PNG/JPG ≤ 10MB) | `TCOND-REG-18`<br>`TCOND-REG-19`<br>`TCOND-REG-20`<br>`TCOND-REG-21`<br>`TCOND-REG-22` | `TC-REG-002`<br>`TC-REG-003`<br>`TC-REG-015`<br>`TC-REG-016`<br>`TC-REG-017` | 5 | 5 (100%) | 0 | 0 | 5 | **100%** |
+| **RULE-REG-08** | Luồng đăng ký thành công (Candidate/Employer) & Token kích hoạt 24h | `TCOND-REG-23`<br>`TCOND-REG-24`<br>`TCOND-REG-25` | `TC-REG-001`<br>`TC-REG-002`<br>`TC-REG-003`<br>`TC-REG-018` | 4 | 3 (75%) | 0 | 0 | 4 | **100%** |
+| **TỔNG CỘNG M2** | **8 Business Rules** | **25 Test Conditions** | **18 Test Cases** | **18** | **17 (94.4%)** | **0** | **0** | **18** | **100%** |
+
+---
+
+## 4. TỔNG HỢP TIẾN ĐỘ THIẾT KẾ VÀ ĐỘ BAO PHỦ CÁC MODULE
 
 | Module | Phụ trách | Tổng số BR | Số Test Cases | Tỷ lệ Tự động hóa | Trạng thái |
 | :--- | :--- | :---: | :---: | :---: | :--- |
 | **M1: Đăng nhập & Phân quyền** | Nguyễn Lâm Thi | 6 | 12 | 100% (12/12) | ✅ Đã hoàn thành thiết kế (W1) |
-| **M2: Đăng ký tài khoản** | Võ Nguyên Khánh | (Dự kiến 4) | (Dự kiến 10-12) | Đang cập nhật | ⏳ Đang triển khai (#4) |
+| **M2: Đăng ký tài khoản** | Võ Nguyên Khánh | 8 | 18 | 94.4% (17/18) | ✅ Đã hoàn thành thiết kế (W1 - #4) |
 | **M3: Tìm kiếm & Lọc việc làm** | Nguyễn Trọng Tiến | (Dự kiến 4) | (Dự kiến 10-12) | Đang cập nhật | ⏳ Đang triển khai (#5) |
 | **M4: Ứng tuyển & Theo dõi hồ sơ** | Lã Trọng Huy | (Dự kiến 4) | (Dự kiến 10-12) | Đang cập nhật | ⏳ Đang triển khai (#6) |
