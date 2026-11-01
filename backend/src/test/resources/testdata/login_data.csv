@@ -1,0 +1,12 @@
+tcId,email,password,expectedResult,expectedMessage
+TC-LOGIN-001,candidate@gmail.com,123456,SUCCESS,
+TC-LOGIN-002,employer@gmail.com,123456,SUCCESS,
+TC-LOGIN-003,tien@gmail.com,123456,SUCCESS,
+TC-LOGIN-004,candidate@gmail.com,WrongPass@999,FAILURE,không chính xác
+TC-LOGIN-005,notfound_99@gmail.com,SomePass@123,FAILURE,Tài khoản không tồn tại
+TC-LOGIN-006,invalid-email-format,ValidPass@123,VALIDATION,
+TC-LOGIN-007,,,VALIDATION,
+TC-LOGIN-008,candidate@gmail.com,,VALIDATION,
+TC-LOGIN-009,,Candidate@123,VALIDATION,
+TC-LOGIN-010,candidate@gmail.com,wrong_case_pass,FAILURE,không chính xác
+TC-LOGIN-011,admin@gmail.com,123456,FAILURE,vô hiệu hóa
