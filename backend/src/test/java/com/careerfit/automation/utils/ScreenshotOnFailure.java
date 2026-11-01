@@ -24,17 +24,12 @@ import java.util.Optional;
  * upon test assertion failure and saves it into target/screenshots/.
  *
  * Implements both TestWatcher and AfterTestExecutionCallback so that screenshots
- * are taken while browser is active, and compatible with SampleFrameworkTest.
+ * are taken while browser is active, and compatible across all test runners.
  */
 public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallback {
 
     private static final String SCREENSHOT_DIR = "target/screenshots";
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS");
-
-    @Override
-    public void testFailed(ExtensionContext context, Throwable cause) {
-        captureScreenshot(context);
-    }
 
     @Override
     public void afterTestExecution(ExtensionContext context) {
@@ -43,11 +38,20 @@ public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallb
         }
     }
 
+    @Override
+    public void testFailed(ExtensionContext context, Throwable cause) {
+        captureScreenshot(context);
+    }
+
     private synchronized void captureScreenshot(ExtensionContext context) {
         // Prevent duplicate screenshot if already taken in this context
         String flagKey = "screenshot_taken_" + context.getUniqueId();
-        if (context.getStore(ExtensionContext.Namespace.GLOBAL).get(flagKey) != null) {
-            return;
+        try {
+            var store = context.getStore(ExtensionContext.Namespace.GLOBAL);
+            if (store != null && store.get(flagKey) != null) {
+                return;
+            }
+        } catch (Exception ignored) {
         }
 
         WebDriver driver = resolveDriver(context);
@@ -75,8 +79,16 @@ public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallb
             Path targetFile = destinationDir.resolve(fileName);
 
             Files.copy(tempScreenshot.toPath(), targetFile, StandardCopyOption.REPLACE_EXISTING);
-            context.getStore(ExtensionContext.Namespace.GLOBAL).put(flagKey, true);
+            try {
+                var store = context.getStore(ExtensionContext.Namespace.GLOBAL);
+                if (store != null) {
+                    store.put(flagKey, true);
+                }
+            } catch (Exception ignored) {
+            }
             System.out.println("[ScreenshotOnFailure] Test failed! Screenshot saved to: " + targetFile.toAbsolutePath());
+        } catch (IOException e) {
+            System.err.println("[ScreenshotOnFailure] Failed to write screenshot to disk: " + e.getMessage());
         } catch (Exception ignored) {
             // Silently ignore if session already quit
         }

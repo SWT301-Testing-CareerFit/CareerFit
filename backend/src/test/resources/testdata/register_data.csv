@@ -1,0 +1,14 @@
+tcId,role,fullName,company,licenseFile,email,phone,password,confirmPassword,expectedResult,expectedMessage
+TC_REG_001,CANDIDATE,Nguyen Van Candidate,,,cand_{RANDOM}@gmail.com,0912345678,Pass1@ab,Pass1@ab,SUCCESS,thành công
+TC_REG_002,EMPLOYER,Tran Tuyen Dung,FPT Software,sample_license.pdf,emp_{RANDOM}@company.com,0987654321,Employer1@,Employer1@,SUCCESS,thành công
+TC_REG_003,CANDIDATE,Nguyen Van Bay,,,cand_{RANDOM}@gmail.com,0912345678,Pass1@a,Pass1@a,FAILURE,ít nhất 8 ký tự
+TC_REG_004,CANDIDATE,Nguyen Van Tam,,,cand_{RANDOM}@gmail.com,0912345678,Pass1@ab,Pass1@ab,SUCCESS,thành công
+TC_REG_005,CANDIDATE,Nguyen Van Ba Hai,,,cand_{RANDOM}@gmail.com,0912345678,Pass1@abcdefghijklmnopqrstuvwxy1,Pass1@abcdefghijklmnopqrstuvwxy1,SUCCESS,thành công
+TC_REG_006,CANDIDATE,Nguyen Van Ba Ba,,,cand_{RANDOM}@gmail.com,0912345678,Pass1@abcdefghijklmnopqrstuvwxy12,Pass1@abcdefghijklmnopqrstuvwxy12,SUCCESS,thành công
+TC_REG_007,CANDIDATE,Nguyen Van InvalidEmail,,,user@invalid,0912345678,Pass1@ab,Pass1@ab,FAILURE,Email không đúng định dạng
+TC_REG_008,CANDIDATE,Nguyen Van InvalidPhone,,,cand_{RANDOM}@gmail.com,0123456789,Pass1@ab,Pass1@ab,FAILURE,Số điện thoại không hợp lệ
+TC_REG_009,EMPLOYER,Tran Tuyen Dung,Tech Corp,invalid_license.txt,emp_{RANDOM}@company.com,0987654321,Employer1@,Employer1@,FAILURE,PDF
+TC_REG_010,EMPLOYER,Tran Tuyen Dung,Tech Corp,,emp_{RANDOM}@company.com,0987654321,Employer1@,Employer1@,FAILURE,Giấy phép kinh doanh
+TC_REG_011,CANDIDATE,Nguyen Van Mismatch,,,cand_{RANDOM}@gmail.com,0912345678,Pass1@ab,DifferentPass1@,FAILURE,Mật khẩu xác nhận không khớp
+TC_REG_012,CANDIDATE,Nguyen Van NoUpper,,,cand_{RANDOM}@gmail.com,0912345678,lowercase1@,lowercase1@,FAILURE,1 chữ hoa
+TC_REG_013,EMPLOYER,Tran Tuyen Dung,,sample_license.pdf,emp_{RANDOM}@company.com,0987654321,Employer1@,Employer1@,FAILURE,tên công ty

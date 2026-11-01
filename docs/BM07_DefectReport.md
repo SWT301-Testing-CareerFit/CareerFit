@@ -5,8 +5,8 @@
 **Chuẩn tham chiếu:** ISTQB CTFL v4.0 (Chương 5.5 Quản lý lỗi) & ISO/IEC/IEEE 29119-3  
 **Người phụ trách (Defect Manager):** Lã Trọng Huy (`TrongHuy317` - SV4)  
 **Phê duyệt (Test Lead):** Nguyễn Lâm Thi (`nguyenlamthi` - SV1)  
-**Phiên bản:** 1.0 | **Ngày lập báo cáo:** 01/11/2026  
-**Đợt chạy kiểm thử:** RUN-01 (Phát hiện & Ghi nhận) $\to$ RUN-02 (Khắc phục & Kiểm thử hồi quy)
+**Phiên bản:** 2.0 | **Ngày lập báo cáo:** 01/11/2026  
+**Đợt chạy kiểm thử:** RUN-01 (Toàn diện 59 tests) $\to$ RUN-02 (Xuất báo cáo Surefire HTML)
 
 ---
 
@@ -39,18 +39,6 @@ Nhóm áp dụng vòng đời xử lý lỗi chuẩn ISTQB:
 | **Lỗi Hệ thống (SUT Bug)** | Sự sai lệch (Deviation) giữa hành vi thực tế của website với yêu cầu nghiệp vụ trong BM02 / User Stories. | **Tạo GitHub Issue** theo mẫu `.github/ISSUE_TEMPLATE/bug_report.md`, gắn nhãn `bug`, `severity`, `priority` và ghi nhận vào BM07. |
 | **Lỗi Kịch bản (Test Script Bug / Flaky)** | Kiểm thử thất bại do mã test (sai locator, thiếu Explicit Wait, server cục bộ chưa chạy, dữ liệu CSV sai cấu trúc). | **Yêu cầu tác giả sửa code test**, gắn nhãn `test-script`, **KHÔNG tạo Bug Issue** để tránh làm sai lệch số liệu chất lượng sản phẩm. |
 
-### 1.4. Định nghĩa Mức độ nghiêm trọng (Severity) & Mức độ ưu tiên (Priority)
-
-* **Severity (Mức độ nghiêm trọng đối với hệ thống):**
-  * `Critical`: Làm sập hệ thống (Crash), hỏng cơ sở dữ liệu, chặn đứng luồng chính không thể tiếp tục kiểm thử.
-  * `Major`: Sai lệch nghiệp vụ nghiêm trọng, chặn một tính năng chính nhưng có thể có giải pháp tạm thời.
-  * `Minor`: Sai thông báo hiển thị, sai validation nhẹ, không chặn luồng nghiệp vụ.
-  * `Trivial`: Lỗi giao diện nhỏ, lệch màu sắc hoặc lỗi chính tả.
-* **Priority (Mức độ ưu tiên xử lý):**
-  * `High`: Phải khắc phục ngay lập tức trước khi chạy đợt kiểm thử tiếp theo.
-  * `Medium`: Khắc phục trong sprint/đợt kiểm thử hiện tại.
-  * `Low`: Khắc phục khi có thời gian rảnh hoặc chuyển sang giai đoạn sau.
-
 ---
 
 ## 2. BẢNG TỔNG HỢP & SÀNG LỌC NGUYÊN NHÂN LỖI (RUN-01 VS RUN-02)
@@ -61,15 +49,17 @@ Nhóm áp dụng vòng đời xử lý lỗi chuẩn ISTQB:
 | **BUG-02** | Mất trạng thái phiên đăng nhập của ứng viên khi truy cập URL trực tiếp hoặc F5 (Thiếu đồng bộ localStorage) | M4 / M1 | `TC-APP-007`<br>`TC-APP-014` | **FAIL** | **SUT Bug** (Mã nguồn AppContext) | ✅ **CLOSED** (Re-test PASS) |
 | **BUG-03** | Đăng nhập thành công ở chế độ Offline Fallback không tự động chuyển hướng màn hình (Stuck at Login) | M1 / M4 | `TC-LOGIN-001`<br>`TC-APP-E2E` | **FAIL** | **SUT Bug** (Mã nguồn LoginPage.jsx) | ✅ **CLOSED** (Re-test PASS) |
 | **BUG-04** | Khách vãng lai bấm "Ứng tuyển ngay" chuyển hướng sang Login nhưng mất ngữ cảnh tin tuyển dụng | M4 | `TC-APP-001` | **FAIL** | **SUT Bug** (UI/UX Routing) | ⏳ **OPEN** (Đã ghi nhận Issue) |
+| **BUG-05** | Form Đăng ký tài khoản (Ứng viên & Doanh nghiệp) văng lỗi "Failed to fetch" khi backend ngắt kết nối | M2 | `TC_REG_001` $\to$ `006`<br>`SmokeLicense` | **FAIL** (6 TC) | **SUT Bug** (Thiếu Fallback / Error Handling) | ⏳ **OPEN** (Đã ghi nhận Issue) |
 | **SCR-01** | Lỗi WebDriver `net::ERR_CONNECTION_REFUSED` do chưa khởi động Vite dev server | Framework | Toàn bộ Test Suite | **FAIL** | **Test Script / Environment** | 🛠️ Đã sửa quy trình (Bật `npm run dev`) |
 | **SCR-02** | Lỗi Flaky Timeout khi chờ thông báo Toast biến mất do thiếu Explicit Wait | M4 | `TC-APP-005` | **FAIL** | **Test Script Bug** | 🛠️ Đã sửa code test (`waitVisible`) |
+| **SCR-03** | NullPointerException trong `SampleFrameworkTest` khi mock ExtensionContext trả về store null | Framework | `SampleFrameworkTest` | **ERROR** (1 TC) | **Test Script Bug** | 🛠️ Đã sửa null check (`BUILD SUCCESS`) |
 
 ---
 
 ## 3. DANH SÁCH DEFECT REPORT CHI TIẾT (SUT BUGS)
 
 ### 📌 DEFECT ID: `BUG-01`
-* **Tiêu đề GitHub Issue:** `[BUG] Xung đột danh sách tài khoản trong AppContext gây lỗi không thể đăng nhập tài khoản Ứng viên (Offline Fallback) #24`
+* **Tiêu đề GitHub Issue:** `[BUG] Xung đột danh sách tài khoản trong AppContext gây lỗi không thể đăng nhập tài khoản Ứng viên (Offline Fallback)`
 * **Module:** `M1 - Đăng nhập` & `M4 - Ứng tuyển việc làm`
 * **Quy tắc nghiệp vụ liên quan:** `RULE-LOGIN-01`, `RULE-APP-01`
 * **Test Case phát hiện:** `TC-LOGIN-001`, `TC-APP-005`
@@ -89,13 +79,13 @@ Nhóm áp dụng vòng đời xử lý lỗi chuẩn ISTQB:
   Do tài khoản `candidate@gmail.com` vừa có trong `INITIAL_USERS_DB` vừa có trong `usersDB`, mảng `allUsers` bị trùng lặp 2 bản ghi cho cùng 1 email. Hàm tìm kiếm `candidateList` trả về độ dài $> 1$, kích hoạt điều kiện cảnh báo trùng lặp tài khoản.
 * **Giải pháp khắc phục:** Sử dụng cấu trúc `Map` để deduplicate danh sách người dùng theo `(u.id || u.email).toLowerCase()` trước khi lọc.
 * **Kết quả kiểm thử lại (RUN-02 Re-testing):** **PASS** (100% các kịch bản đăng nhập ứng viên chạy thành công).
-* **Bằng chứng kiểm thử (Evidence):** Ảnh chụp màn hình lỗi lưu tại `docs/test_fail_center.png`.
+* **Bằng chứng kiểm thử (Evidence):** Ảnh chụp màn hình lỗi lưu tại `docs/reports/test_fail_center.png`.
 * **Trạng thái:** **CLOSED**
 
 ---
 
 ### 📌 DEFECT ID: `BUG-02`
-* **Tiêu đề GitHub Issue:** `[BUG] Mất trạng thái phiên đăng nhập của ứng viên khi truy cập URL trực tiếp hoặc làm mới trang (F5) #25`
+* **Tiêu đề GitHub Issue:** `[BUG] Mất trạng thái phiên đăng nhập của ứng viên khi truy cập URL trực tiếp hoặc làm mới trang (F5)`
 * **Module:** `M4 - Ứng tuyển & Theo dõi đơn trên Kanban`
 * **Quy tắc nghiệp vụ liên quan:** `RULE-APP-06`
 * **Test Case phát hiện:** `TC-APP-007`, `TC-APP-014`
@@ -111,12 +101,13 @@ Nhóm áp dụng vòng đời xử lý lỗi chuẩn ISTQB:
   Trong `frontend/src/context/AppContext.jsx`, hàm `setCurrentUser` chỉ cập nhật biến trạng thái React (`useState`, `userRef`) mà không thực hiện đồng bộ `localStorage.setItem('careerfit_current_user', JSON.stringify(next))`. Khi trình duyệt reload hoặc mở trang mới, state React bị reset về `null`.
 * **Giải pháp khắc phục:** Bổ sung cơ chế ghi và xóa `careerfit_current_user` trong `localStorage` mỗi khi `setCurrentUser` được kích hoạt.
 * **Kết quả kiểm thử lại (RUN-02 Re-testing):** **PASS** (Kịch bản điều hướng trực tiếp giữa các trang trong `ApplicationTest` hoạt động trơn tru).
+* **Bằng chứng kiểm thử (Evidence):** Ảnh chụp màn hình lưu tại `docs/reports/m4_test_result.png`.
 * **Trạng thái:** **CLOSED**
 
 ---
 
 ### 📌 DEFECT ID: `BUG-03`
-* **Tiêu đề GitHub Issue:** `[BUG] Đăng nhập thành công ở chế độ Offline Fallback không tự động chuyển hướng màn hình #26`
+* **Tiêu đề GitHub Issue:** `[BUG] Đăng nhập thành công ở chế độ Offline Fallback không tự động chuyển hướng màn hình (Stuck at Login)`
 * **Module:** `M1 - Đăng nhập` / `M4 - Ứng tuyển`
 * **Quy tắc nghiệp vụ liên quan:** `RULE-LOGIN-01`, `RULE-APP-01`
 * **Test Case phát hiện:** `TC-LOGIN-001`, `TC-APP-E2E`
@@ -140,7 +131,7 @@ Nhóm áp dụng vòng đời xử lý lỗi chuẩn ISTQB:
 ---
 
 ### 📌 DEFECT ID: `BUG-04`
-* **Tiêu đề GitHub Issue:** `[BUG] Khách vãng lai bấm "Ứng tuyển ngay" chuyển hướng sang Login nhưng mất ngữ cảnh tin tuyển dụng #27`
+* **Tiêu đề GitHub Issue:** `[BUG] Khách vãng lai bấm "Ứng tuyển ngay" chuyển hướng sang Login nhưng mất ngữ cảnh tin tuyển dụng`
 * **Module:** `M4 - Chi tiết việc làm & Ứng tuyển`
 * **Quy tắc nghiệp vụ liên quan:** `RULE-APP-01`
 * **Test Case phát hiện:** `TC-APP-001`
@@ -154,7 +145,28 @@ Nhóm áp dụng vòng đời xử lý lỗi chuẩn ISTQB:
 * **Expected Result (Kỳ vọng):** Sau khi đăng nhập, hệ thống tự động đưa ứng viên quay lại trang `/jobs/job-01` để tiếp tục nộp đơn (Deep-link state preservation).
 * **Actual Result (Thực tế):** Hệ thống đưa ứng viên về `candidate-dashboard`, ứng viên phải tự tìm lại công việc vừa xem.
 * **Phân tích nguyên nhân gốc rễ (Root Cause Analysis):** Lệnh chuyển hướng của nút "Ứng tuyển ngay" không gửi kèm tham số truy vấn (Query Parameter) dạng `?redirect=/jobs/job-01`.
-* **Trạng thái:** **OPEN** (Đã tạo Defect Issue và đề xuất đưa vào backlog cải tiến phiên bản tiếp theo).
+* **Trạng thái:** **OPEN** (Đã tạo Defect Issue và đề xuất đưa vào backlog cải tiến).
+
+---
+
+### 📌 DEFECT ID: `BUG-05`
+* **Tiêu đề GitHub Issue:** `[BUG] Form Đăng ký tài khoản (Ứng viên & Doanh nghiệp) hiển thị lỗi thô "Failed to fetch" khi mất kết nối backend`
+* **Module:** `M2 - Đăng ký tài khoản`
+* **Quy tắc nghiệp vụ liên quan:** `RULE-REG-01`, `RULE-REG-02`
+* **Test Case phát hiện:** `TC_REG_001`, `TC_REG_002`, `TC_REG_004`, `TC_REG_005`, `TC_REG_006`, `testEmployerRegistrationWithLicenseUploadSmoke`
+* **Severity:** `severity:major` | **Priority:** `priority:high`
+* **Người phát hiện:** Lã Trọng Huy (`TrongHuy317`) | **Ngày phát hiện:** 01/11/2026 (Trong đợt chạy RUN-01)
+* **Môi trường kiểm thử:** Google Chrome, URL: `http://localhost:5173/login` (Tab Đăng ký)
+* **Mô tả các bước tái hiện (Steps to Reproduce):**
+  1. Mở trang đăng ký tài khoản.
+  2. Nhập đầy đủ thông tin hợp lệ (Họ tên, email mới, mật khẩu hợp lệ, số điện thoại).
+  3. Bấm "Đăng ký tài khoản".
+* **Expected Result (Kỳ vọng):** Đăng ký thành công hoặc hiển thị thông báo lỗi mạng thân thiện với người dùng.
+* **Actual Result (Thực tế):** Giao diện văng thông báo lỗi kỹ thuật: *"Failed to fetch"*, ngăn chặn toàn bộ người dùng mới tham gia nền tảng khi backend port 8080 chưa sẵn sàng.
+* **Phân tích nguyên nhân gốc rễ (Root Cause Analysis):**  
+  Trong `frontend/src/components/auth/LoginPage.jsx`, hàm `handleManualRegister` gửi `fetch('/api/v1/auth/register')` nhưng khối `catch (err)` không có cơ chế fallback lưu trữ cục bộ (`localStorage` / `usersDB`) như luồng Đăng nhập, đồng thời không chuyển đổi ngoại lệ mạng thành thông báo tiếng Việt rõ nghĩa.
+* **Bằng chứng kiểm thử (Evidence):** Ảnh chụp màn hình lỗi lưu tại `docs/reports/RegisterTest_*.png`.
+* **Trạng thái:** **OPEN** (Đã phân loại và chuyển giao cho Framework Owner Võ Nguyên Khánh xử lý).
 
 ---
 
@@ -166,17 +178,19 @@ Tuân thủ nghiêm ngặt chuẩn **ISTQB CTFL 5.5**, các lỗi phát sinh do 
 |:---:|---|---|---|:---:|
 | `SCR-01` | `net::ERR_CONNECTION_REFUSED` | Kịch bản tự động thực thi khi server Frontend Vite (port 5173) chưa được khởi động trước. | Khởi chạy `npm run dev` trong terminal riêng trước khi chạy `mvn clean test`. | `test-script` |
 | `SCR-02` | `NoSuchElementException` hoặc `TimeoutException` khi kiểm tra Toast | Thời gian hiển thị Toast animation quá nhanh hoặc có độ trễ kết xuất, test script dùng kiểm tra tức thì dẫn đến Flaky Test. | Chuyển toàn bộ kiểm tra sang **Explicit Wait** (`waitVisible`, `waitClickable`), loại bỏ 100% `Thread.sleep()`. | `test-script` |
+| `SCR-03` | NullPointerException trong `SampleFrameworkTest` | Hàm unit test `testScreenshotOnFailureGeneration` sử dụng Mockito mock `ExtensionContext` nhưng chưa mock `getStore()`, trả về null. | Bổ sung kiểm tra null safety trong `ScreenshotOnFailure.java` (`try { var store = context.getStore(...); if (store != null) ... }`). | `test-script` |
 
 ---
 
 ## 5. MA TRẬN TRUY VẾT DEFECT (DEFECT TRACEABILITY MATRIX)
 
-| Defect ID | GitHub Issue ID | Module | Quy tắc BM02 | Test Case BM03 | Kịch bản Java thực thi | Severity | Priority | Trạng thái |
-|:---:|:---:|:---:|:---:|:---:|---|:---:|:---:|:---:|
-| `BUG-01` | `#24` | M1 / M4 | `RULE-LOGIN-01`<br>`RULE-APP-01` | `TC-LOGIN-001`<br>`TC-APP-005` | `ApplicationTest#testApplicationFullStateTransitionFlow` | Major | High | **CLOSED** |
-| `BUG-02` | `#25` | M4 | `RULE-APP-06` | `TC-APP-007`<br>`TC-APP-014` | `ApplicationTest#testKanbanViewSwitchingAndSearch` | Major | High | **CLOSED** |
-| `BUG-03` | `#26` | M1 / M4 | `RULE-LOGIN-01` | `TC-LOGIN-001` | `LoginTest#testLoginDataDriven` | Major | High | **CLOSED** |
-| `BUG-04` | `#27` | M4 | `RULE-APP-01` | `TC-APP-001` | `ApplicationTest#testApplyDataDriven` | Minor | Medium | **OPEN** |
+| Defect ID | Module | Quy tắc BM02 | Test Case BM03 | Kịch bản Java thực thi | Severity | Priority | Trạng thái |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| `BUG-01` | M1 / M4 | `RULE-LOGIN-01`<br>`RULE-APP-01` | `TC-LOGIN-001`<br>`TC-APP-005` | `ApplicationTest#testApplicationFullStateTransitionFlow` | Major | High | **CLOSED** |
+| `BUG-02` | M4 | `RULE-APP-06` | `TC-APP-007`<br>`TC-APP-014` | `ApplicationTest#testKanbanViewSwitchingAndSearch` | Major | High | **CLOSED** |
+| `BUG-03` | M1 / M4 | `RULE-LOGIN-01` | `TC-LOGIN-001` | `LoginTest#testLoginDataDriven` | Major | High | **CLOSED** |
+| `BUG-04` | M4 | `RULE-APP-01` | `TC-APP-001` | `ApplicationTest#testApplyDataDriven` | Minor | Medium | **OPEN** |
+| `BUG-05` | M2 | `RULE-REG-01`<br>`RULE-REG-02` | `TC_REG_001` $\to$ `006` | `RegisterTest#testRegisterDataDriven` | Major | High | **OPEN** |
 
 ---
 
@@ -184,21 +198,21 @@ Tuân thủ nghiêm ngặt chuẩn **ISTQB CTFL 5.5**, các lỗi phát sinh do 
 
 ### 6.1. Phân bổ Defect theo Mức độ nghiêm trọng (Severity)
 * `Critical`: 0 (0%) — Hệ thống không có lỗi nghiêm trọng gây sập (crash) hoặc rò rỉ dữ liệu.
-* `Major`: 3 (75%) — Các lỗi logic xác thực và đồng bộ phiên làm việc.
-* `Minor`: 1 (25%) — Lỗi trải nghiệm chuyển hướng người dùng chưa tối ưu.
+* `Major`: 4 (80%) — Các lỗi logic xác thực, đăng ký và đồng bộ phiên làm việc.
+* `Minor`: 1 (20%) — Lỗi trải nghiệm chuyển hướng người dùng chưa tối ưu.
 * `Trivial`: 0 (0%).
-* **Tổng số lỗi SUT:** **4 Defects**.
+* **Tổng số lỗi SUT:** **5 Defects**.
 
 ### 6.2. Phân bổ Defect theo Mức độ ưu tiên (Priority)
-* `High`: 3 (75%) — Đã được xử lý ngay lập tức để phục vụ kiểm thử hồi quy.
-* `Medium`: 1 (25%) — Ghi nhận backlog.
+* `High`: 4 (80%) — Đã được xử lý 3 lỗi, 1 lỗi M2 đang mở.
+* `Medium`: 1 (20%) — Ghi nhận backlog.
 * `Low`: 0 (0%).
 
 ### 6.3. Hiệu quả khắc phục lỗi (Fix Rate & Re-test)
-* **Số lỗi đã sửa và đóng (Closed):** 3 / 4 (**75%**).
-* **Tỷ lệ Re-test thành công trong RUN-02:** **100% (3/3 bugs được sửa đều PASS trong lần chạy thứ 2)**.
+* **Số lỗi đã sửa và đóng (Closed):** 3 / 5 (**60%**).
+* **Tỷ lệ Re-test thành công trong RUN-02 cho Module M4:** **100% (9/9 tests của ApplicationTest đều PASS)**.
 * **Kết luận nghiệm thu của Defect Manager:**  
-  Sau đợt chạy RUN-02, toàn bộ các lỗi mức độ `Major` chặn luồng nộp đơn ứng tuyển và đăng nhập đã được xử lý triệt để. Hệ thống đạt tiêu chí sẵn sàng nghiệm thu (Exit Criteria).
+  Sau đợt chạy RUN-02, toàn bộ các lỗi mức độ `Major` của Module M4 đã được xử lý triệt để. Báo cáo Surefire HTML và ảnh chụp lỗi đã được lưu trữ đầy đủ làm bằng chứng nghiệm thu tại `docs/reports/`.
 
 ---
 

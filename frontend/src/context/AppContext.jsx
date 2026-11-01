@@ -146,6 +146,17 @@ export function AppProvider({ children }) {
 
     userRef.current = next;
 
+    try {
+      if (next) {
+        localStorage.setItem('careerfit_current_user', JSON.stringify(next));
+      } else {
+        localStorage.removeItem('careerfit_current_user');
+        localStorage.removeItem('careerfit_token');
+      }
+    } catch (e) {
+      console.error('Error persisting currentUser to localStorage:', e);
+    }
+
     updateCurrentUser(next);
 
   }, []);
@@ -1266,9 +1277,11 @@ export function AppProvider({ children }) {
 
     let user = null;
 
-    // Deduplicate allUsers by user id to prevent duplicate matching
+    // Deduplicate allUsers by id and email to prevent duplicate matching
     const userMap = new Map();
-    [...INITIAL_USERS_DB, ...usersDB].forEach(u => { if (u && u.id) userMap.set(u.id, u); });
+    [...INITIAL_USERS_DB, ...usersDB].forEach(u => {
+      if (u && (u.id || u.email)) userMap.set((u.id || u.email).toLowerCase(), u);
+    });
     const allUsers = Array.from(userMap.values());
 
     const candidateList = allUsers.filter(u => 
