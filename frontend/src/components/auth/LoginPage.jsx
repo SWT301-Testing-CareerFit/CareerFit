@@ -99,6 +99,10 @@ export function LoginPage() {
       const fallback = login ? login(cleanIdentifier, loginPassword) : null;
       if (fallback && fallback.success) {
         showToast('Đăng nhập thành công!', 'success');
+        const targetPage = fallback.user?.role === 'EMPLOYER'
+          ? 'employer-dashboard'
+          : (fallback.user?.role === 'ADMIN' ? 'admin-dashboard' : 'candidate-dashboard');
+        setActivePage(targetPage);
       } else {
         const errorText = (fallback && fallback.message) || err.message || 'Đăng nhập không thành công.';
         setErrorMessage(errorText);

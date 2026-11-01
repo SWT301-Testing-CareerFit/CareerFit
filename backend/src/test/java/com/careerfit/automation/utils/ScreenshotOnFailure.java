@@ -1,6 +1,7 @@
 package com.careerfit.automation.utils;
 
 import com.careerfit.automation.base.BaseTest;
+import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
 import org.openqa.selenium.OutputType;
@@ -21,23 +22,35 @@ import java.util.Optional;
 /**
  * JUnit 5 Extension that automatically captures a browser screenshot
  * upon test assertion failure and saves it into target/screenshots/.
+ * Implements AfterTestExecutionCallback to ensure screenshot is captured
+ * BEFORE @AfterEach tearDown() calls driver.quit().
  */
-public class ScreenshotOnFailure implements TestWatcher {
+public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallback {
 
     private static final String SCREENSHOT_DIR = "target/screenshots";
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS");
 
     @Override
+    public void afterTestExecution(ExtensionContext context) {
+        if (context.getExecutionException().isPresent()) {
+            captureScreenshot(context);
+        }
+    }
+
+    @Override
     public void testFailed(ExtensionContext context, Throwable cause) {
+        // Fallback in case afterTestExecution was not invoked
+        captureScreenshot(context);
+    }
+
+    private void captureScreenshot(ExtensionContext context) {
         WebDriver driver = resolveDriver(context);
 
         if (driver == null) {
-            System.err.println("[ScreenshotOnFailure] Cannot capture screenshot: WebDriver instance is null.");
             return;
         }
 
         if (!(driver instanceof TakesScreenshot)) {
-            System.err.println("[ScreenshotOnFailure] WebDriver instance does not support TakesScreenshot.");
             return;
         }
 
@@ -60,7 +73,7 @@ public class ScreenshotOnFailure implements TestWatcher {
         } catch (IOException e) {
             System.err.println("[ScreenshotOnFailure] Failed to write screenshot to disk: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("[ScreenshotOnFailure] Error capturing screenshot: " + e.getMessage());
+            // Ignore if driver session is already closed
         }
     }
 
