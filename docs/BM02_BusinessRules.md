@@ -1,25 +1,66 @@
-# BM02 – BUSINESS RULES & TEST CONDITIONS
-## Module M4: Ứng tuyển việc làm & Theo dõi trạng thái đơn trên Kanban (CareerFit)
+# BM02 – TÀI LIỆU BUSINESS RULES & TEST CONDITIONS (ĐẶC TẢ NGHIỆP VỤ & ĐIỀU KIỆN KIỂM THỬ)
 
-> **Dự án:** CareerFit — Nền tảng tuyển dụng IT dành cho Sinh viên & Fresher  
-> **Môn học:** SWT301 — Software Testing (Fall 2026) | **FPT University**  
-> **Chuẩn tham chiếu:** ISTQB CTFL v4.0 (Ch.1.4 Test Analysis & Ch.4.2 Black-box Techniques)  
-> **Người phụ trách (Module Owner):** Lã Trọng Huy (SV4 - Defect Manager & M4 Owner)  
-> **Phạm vi giao diện:** `/jobs/:id` (Chi tiết tin tuyển dụng) và `/candidate/applications` (Bảng Kanban theo dõi đơn ứng tuyển)
-
----
-
-## 1. TỔNG QUAN VỀ PHẠM VI NGHIỆP VỤ M4
-
-Module M4 chịu trách nhiệm quản lý toàn bộ luồng tương tác của Ứng viên (Candidate) đối với tin tuyển dụng và quá trình theo dõi đơn sau khi ứng tuyển:
-1. **Ứng tuyển việc làm (Job Application):** Kiểm tra điều kiện tiên quyết (đăng nhập, vai trò, trạng thái tài khoản, tệp CV đã tải lên) trước khi cho phép gửi hồ sơ.
-2. **Theo dõi trạng thái đơn (Application Kanban Tracking):** Hiển thị danh sách các đơn đã nộp theo dạng nhóm trạng thái (Grouped List / Kanban Column): `Đã nộp` (Submitted) $\to$ `Đã xem` (Viewed) $\to$ `Phỏng vấn` (Interview) $\to$ `Offer` $\to$ `Từ chối` (Rejected).
-3. **Hủy đơn ứng tuyển (Cancel Application):** Cho phép ứng viên rút lại hồ sơ khi còn ở trạng thái ban đầu, tự động cập nhật lại giao diện tin tuyển dụng và bảng Kanban.
-4. **Lưu tin tuyển dụng (Bookmark Job):** Hỗ trợ bật/tắt đánh dấu tin tuyển dụng để tra cứu sau.
+**Dự án:** CareerFit – Hệ thống Kết nối Tuyển dụng Thông minh  
+**Môn học:** SWT301 – Software Testing (Đại học FPT)  
+**Tác giả:** Nhóm Kiểm thử CareerFit (Nguyễn Lâm Thi - M1, Võ Nguyên Khánh - M2, Nguyễn Trọng Tiến - M3, Lã Trọng Huy - M4)  
+**Phiên bản:** 1.1  
+**Ngày cập nhật:** 01/11/2026  
 
 ---
 
-## 2. DANH SÁCH BUSINESS RULES CHI TIẾT (RULE-APP-01 ĐẾN RULE-APP-06)
+## 1. TỔNG QUAN
+
+Tài liệu này xác định các quy tắc nghiệp vụ (Business Rules - BR) và các điều kiện kiểm thử (Test Conditions - TCOND) suy biến từ yêu cầu hệ thống (SRS/Acceptance Criteria).  
+Các điều kiện kiểm thử được thiết kế dựa trên các kỹ thuật kiểm thử hộp đen chuẩn ISTQB CTFL v4.0:
+* **EP (Equivalence Partitioning):** Phân vùng tương đương.
+* **BVA (Boundary Value Analysis):** Phân tích giá trị biên.
+* **DT (Decision Table):** Bảng quyết định tổ hợp điều kiện.
+* **ST (State Transition):** Kiểm thử chuyển trạng thái.
+* **EG (Error Guessing):** Đoán lỗi ngoại lệ.
+
+---
+
+## 2. MODULE 1 (M1): ĐĂNG NHẬP & PHÂN QUYỀN (LOGIN & AUTHORIZATION)
+* **Người phụ trách:** Nguyễn Lâm Thi (`nguyenlamthi`)
+* **Endpoint / Giao diện kiểm thử:** `/login`, `/jobs`, `/employer/dashboard`, `/admin/dashboard`
+* **Testable UI Scope:** Kiểm thử form đăng nhập nội bộ (Email + Password), phân quyền sau đăng nhập theo vai trò (Role), xử lý lỗi và đăng xuất.
+
+### 2.1. Bảng Business Rules (M1)
+
+| BR ID | Mô tả Quy tắc nghiệp vụ (Business Rule) | Test Condition ID | Kỹ thuật kiểm thử | Automation? | Ghi chú |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **RULE-LOGIN-01** | Đăng nhập thành công với thông tin hợp lệ (Email & Password đúng, tài khoản đang Active). Hệ thống cấp phiên làm việc (Session/Token) và điều hướng đúng giao diện tương ứng với Role của người dùng. | `TCOND-LOGIN-01`, `TCOND-LOGIN-02`, `TCOND-LOGIN-03` | Decision Table | ✅ Yes | - CANDIDATE -> `/jobs`<br>- EMPLOYER -> `/employer`<br>- ADMIN -> `/admin` |
+| **RULE-LOGIN-02** | Đăng nhập thất bại khi thông tin không khớp (Sai Email hoặc Sai Mật khẩu). Hệ thống hiển thị thông báo lỗi chung *"Email hoặc mật khẩu không chính xác"*, **tuyệt đối không tiết lộ** trường nào bị sai để đảm bảo an toàn bảo mật, người dùng vẫn ở lại trang `/login`. | `TCOND-LOGIN-04`, `TCOND-LOGIN-05` | Decision Table / Error Guessing | ✅ Yes | Bảo mật chống Enumeration Attack |
+| **RULE-LOGIN-03** | Ràng buộc bắt buộc (Required Fields) và Định dạng (Format): Email và Password là 2 trường bắt buộc. Nếu để trống hoặc sai định dạng email, hệ thống chặn submit và hiển thị validation message tương ứng. | `TCOND-LOGIN-06`, `TCOND-LOGIN-07`, `TCOND-LOGIN-08`, `TCOND-LOGIN-09` | Equivalence Partitioning | ✅ Yes | Validation client-side & form attribute |
+| **RULE-LOGIN-04** | Mật khẩu có phân biệt chữ hoa và chữ thường (Case-sensitivity). Chuỗi mật khẩu nhập vào phải khớp chính xác từng ký tự hoa/thường với mật khẩu đã lưu. | `TCOND-LOGIN-10` | Equivalence Partitioning | ✅ Yes | Đảm bảo tính toàn vẹn hash password |
+| **RULE-LOGIN-05** | Tài khoản bị khóa (LOCKED) hoặc chưa kích hoạt (INACTIVE): Dù nhập đúng email và password, hệ thống vẫn từ chối đăng nhập và hiển thị thông báo trạng thái tài khoản bị khóa/chưa kích hoạt. | `TCOND-LOGIN-11` | Decision Table / State Transition | ✅ Yes | Kiểm tra cờ trạng thái tài khoản |
+| **RULE-LOGIN-06** | Đăng xuất (Logout) và Hủy phiên làm việc: Khi người dùng bấm Đăng xuất, hệ thống hủy bỏ Session/Token lưu trữ, chuyển hướng về trang công khai và xóa thông tin phiên khỏi Navbar. | `TCOND-LOGIN-12` | State Transition | ✅ Yes | Kiểm tra dọn dẹp state và localStorage |
+
+### 2.2. Bảng quyết định kiểm thử (Decision Table - M1)
+
+| Điều kiện (Conditions) | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Email tồn tại trong hệ thống?** | Y | Y | Y | Y | N | Valid | Valid | Empty | Valid |
+| **Password đúng tuyệt đối?** | Y | Y | Y | N | - | Case-Wrong | Empty | Valid | Empty |
+| **Role người dùng** | CANDIDATE | EMPLOYER | ADMIN | - | - | - | - | - | - |
+| **Trạng thái tài khoản** | ACTIVE | ACTIVE | ACTIVE | ACTIVE | - | ACTIVE | - | - | LOCKED |
+| **Hành động (Actions)** | | | | | | | | | |
+| Đăng nhập thành công | **X** | **X** | **X** | | | | | | |
+| Điều hướng trang Candidate (`/jobs`) | **X** | | | | | | | | |
+| Điều hướng trang Employer (`/employer`)| | **X** | | | | | | | |
+| Điều hướng trang Admin (`/admin`) | | | **X** | | | | | | |
+| Báo lỗi "Email/mật khẩu không đúng"| | | | **X** | **X** | **X** | | | |
+| Báo lỗi validation required | | | | | | | **X** | **X** | |
+| Báo lỗi "Tài khoản bị khóa/chưa kích hoạt"| | | | | | | | | **X** |
+
+---
+
+## 3. MODULE 4 (M4): ỨNG TUYỂN VIỆC LÀM & THEO DÕI TRẠNG THÁI ĐƠN TRÊN KANBAN
+* **Người phụ trách (Module Owner):** Lã Trọng Huy (`TrongHuy317` - SV4)
+* **Endpoint / Giao diện kiểm thử:** `/jobs/:id` (Chi tiết tin tuyển dụng) và `/candidate/applications` (Bảng Kanban theo dõi đơn ứng tuyển)
+* **Testable UI Scope:** Toàn bộ luồng tương tác của Ứng viên (Candidate) đối với tin tuyển dụng (ứng tuyển, hủy đơn, lưu bookmark) và theo dõi trạng thái đơn trên Kanban.
+
+### 3.1. Bảng Business Rules (M4)
 
 | BR ID | Tên quy tắc nghiệp vụ | Mô tả quy tắc kiểm thử được (Testable Statement) | Điều kiện tiên quyết & Dữ liệu | Kết quả mong đợi (Expected Result) | Auto? |
 |---|---|---|---|---|:---:|
@@ -30,13 +71,7 @@ Module M4 chịu trách nhiệm quản lý toàn bộ luồng tương tác của
 | **RULE-APP-05** | Chuyển đổi trạng thái Hủy đơn (State Transition) | Khi ứng viên đang ở trạng thái `[Đã ứng tuyển]`, bấm vào nút `[— Hủy]`, hệ thống lập tức hủy đơn ứng tuyển. Nút bấm trên giao diện lập tức quay về trạng thái ban đầu `[Ứng tuyển ngay]`. | - Candidate đã nộp đơn thành công trước đó.<br>- Đang ở trang chi tiết `/jobs/:id`. | - Toast *"Đã hủy đơn ứng tuyển thành công."* xuất hiện.<br>- Nút bấm đổi lại thành `Ứng tuyển ngay`.<br>- Đơn ứng tuyển bị xóa khỏi danh sách ứng tuyển của candidate. | ✅ Có |
 | **RULE-APP-06** | Đồng bộ Bảng Kanban & Quản lý Bookmark (Lưu tin) | - **Đồng bộ Kanban:** Khi nộp đơn thành công, truy cập `/candidate/applications` đơn phải xuất hiện tại cột/nhóm `Đã nộp hồ sơ`. Khi hủy đơn, đơn phải biến mất hoàn toàn khỏi Kanban.<br>- **Bookmark:** Bấm nút "Lưu tin" chuyển sang trạng thái "Đã lưu tin" (icon fill), bấm lần nữa quay lại "Lưu tin" (icon unfill). | - Candidate đã đăng nhập.<br>- Thực hiện nộp/hủy đơn và bật/tắt lưu tin. | - Kanban `/candidate/applications`: Đơn hiển thị đúng cột `Đã nộp`, ngày nộp và tên công ty; khi hủy thì biến mất.<br>- Nút Lưu tin: Toggle đúng văn bản và trạng thái active `is-saved`. | ✅ Có |
 
----
-
-## 3. PHÂN TÍCH KỸ THUẬT KIỂM THỬ HỘP ĐEN (BLACK-BOX TECHNIQUES)
-
-### 3.1. Kỹ thuật Bảng quyết định (Decision Table) cho RULE-APP-01, RULE-APP-02, RULE-APP-04
-
-Bảng quyết định kiểm tra tất cả các tổ hợp điều kiện đầu vào khi người dùng kích hoạt hành động **"Ứng tuyển ngay"**:
+### 3.2. Bảng quyết định kiểm thử (Decision Table - M4)
 
 | Điều kiện (Conditions) | R1 | R2 | R3 | R4 | R5 | R6 |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
@@ -54,48 +89,15 @@ Bảng quyết định kiểm tra tất cả các tổ hợp điều kiện đ�
 | Nộp đơn thành công, nút đổi thành "✓ Đã ứng tuyển — Hủy" | | | | | | **X** |
 | **Test Case ID tương ứng** | `TC-APP-001` | `TC-APP-002` | `TC-APP-003` | `TC-APP-004` | `TC-APP-006` | `TC-APP-005` |
 
----
+### 3.3. Sơ đồ Chuyển đổi trạng thái (State Transition Testing - M4)
 
-### 3.2. Kỹ thuật Chuyển đổi trạng thái (State Transition Testing)
-
-#### Sơ đồ 1: Vòng đời nút Ứng tuyển tại trang Chi tiết việc làm (`/jobs/:id`)
 ```
-                     [S1: Chưa ứng tuyển]
-                       (Nút: "Ứng tuyển ngay")
-                                 |
-           Thao tác: Click "Ứng tuyển ngay" (Hồ sơ hợp lệ)
-                                 v
-                     [S2: Đã ứng tuyển]
-                   (Nút: "✓ Đã ứng tuyển — Hủy")
-                                 |
-           Thao tác: Click "— Hủy" (Xác nhận hủy)
-                                 v
-                     [S1: Chưa ứng tuyển]
-                       (Nút: "Ứng tuyển ngay")
+[S1: Chưa ứng tuyển] ──(Click "Ứng tuyển ngay")──> [S2: Đã ứng tuyển]
+        ^                                                   │
+        └─────────────────(Click "— Hủy")───────────────────┘
 ```
 
-#### Sơ đồ 2: Đồng bộ hiển thị trên Bảng theo dõi Kanban (`/candidate/applications`)
-```
- [Chưa nộp đơn] ──(Nộp đơn tại /jobs/:id)──> [Hiển thị tại Cột: "Đã nộp hồ sơ"]
-       ^                                                      |
-       │                                                      │ (Nhà tuyển dụng review)
-       │                                                      v
-       │                                            [Cột: "Đã được xem"]
-       │                                                      |
-       │ (Hủy đơn khi còn ở "Đã nộp")                          v
-       └─────────────────────────────────────── [Cột: "Phỏng vấn / Offer / Từ chối"]
-```
-
-#### Sơ đồ 3: Vòng đời nút Bookmark Lưu tin tuyển dụng
-```
- [B1: Chưa lưu tin] ──(Click "Lưu tin")──> [B2: Đã lưu tin] (is-saved = true, icon fill)
-          ^                                        |
-          └───────(Click "Đã lưu tin")─────────────┘
-```
-
----
-
-## 4. MA TRẬN ĐIỀU KIỆN KIỂM THỬ (TEST CONDITIONS MATRIX)
+### 3.4. Ma trận Điều kiện kiểm thử (Test Conditions Matrix - M4)
 
 | Test Condition ID | Mô tả điều kiện kiểm thử (Test Condition) | Kỹ thuật áp dụng | Ánh xạ Test Case ID |
 |---|---|:---:|:---:|
@@ -113,3 +115,14 @@ Bảng quyết định kiểm tra tất cả các tổ hợp điều kiện đ�
 | `TCOND-APP-12` | Kiểm tra nút ứng tuyển bị vô hiệu hóa ("Chưa mở ứng tuyển") khi tin chưa được duyệt hoặc bị ẩn | BVA / State | `TC-APP-012` |
 | `TCOND-APP-13` | Kiểm tra chức năng tìm kiếm đơn ứng tuyển theo từ khóa tên việc làm / công ty trên Kanban | Equivalence Partitioning | `TC-APP-013` |
 | `TCOND-APP-14` | Kiểm tra chuyển đổi chế độ xem giữa dạng Danh sách (List) và dạng Bảng (Board/Kanban) | State Transition | `TC-APP-014` |
+
+---
+
+## 4. KHUNG THEO DÕI CHO CÁC MODULE TIẾP THEO (M2, M3)
+
+* **MODULE 2 (M2): ĐĂNG KÝ TÀI KHOẢN (REGISTRATION)**  
+  * **Người phụ trách:** Võ Nguyên Khánh (`richnk123a-cyber`)  
+  * **Quy tắc chính:** `RULE-REG-01` (Đăng ký Ứng viên), `RULE-REG-02` (Đăng ký Doanh nghiệp kèm tải lên GPKD), `RULE-REG-03` (Trùng lặp email), `RULE-REG-04` (Validate mật khẩu mạnh).
+* **MODULE 3 (M3): TÌM KIẾM & LỌC VIỆC LÀM (JOB SEARCH & FILTER)**  
+  * **Người phụ trách:** Nguyễn Trọng Tiến (`tiendeptroai`)  
+  * **Quy tắc chính:** `RULE-SEARCH-01` (Tìm kiếm từ khóa), `RULE-SEARCH-02` (Lọc theo ngành nghề/địa điểm/mức lương), `RULE-SEARCH-03` (Không tìm thấy kết quả).

@@ -22,8 +22,9 @@ import java.util.Optional;
 /**
  * JUnit 5 Extension that automatically captures a browser screenshot
  * upon test assertion failure and saves it into target/screenshots/.
- * Implements AfterTestExecutionCallback to ensure screenshot is captured
- * BEFORE @AfterEach tearDown() calls driver.quit().
+ *
+ * Implements both TestWatcher and AfterTestExecutionCallback so that screenshots
+ * are taken while browser is active, and compatible across all test runners.
  */
 public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallback {
 
@@ -39,11 +40,16 @@ public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallb
 
     @Override
     public void testFailed(ExtensionContext context, Throwable cause) {
-        // Fallback in case afterTestExecution was not invoked
         captureScreenshot(context);
     }
 
-    private void captureScreenshot(ExtensionContext context) {
+    private synchronized void captureScreenshot(ExtensionContext context) {
+        // Prevent duplicate screenshot if already taken in this context
+        String flagKey = "screenshot_taken_" + context.getUniqueId();
+        if (context.getStore(ExtensionContext.Namespace.GLOBAL).get(flagKey) != null) {
+            return;
+        }
+
         WebDriver driver = resolveDriver(context);
 
         if (driver == null) {
@@ -69,11 +75,12 @@ public class ScreenshotOnFailure implements TestWatcher, AfterTestExecutionCallb
             Path targetFile = destinationDir.resolve(fileName);
 
             Files.copy(tempScreenshot.toPath(), targetFile, StandardCopyOption.REPLACE_EXISTING);
+            context.getStore(ExtensionContext.Namespace.GLOBAL).put(flagKey, true);
             System.out.println("[ScreenshotOnFailure] Test failed! Screenshot saved to: " + targetFile.toAbsolutePath());
         } catch (IOException e) {
             System.err.println("[ScreenshotOnFailure] Failed to write screenshot to disk: " + e.getMessage());
-        } catch (Exception e) {
-            // Ignore if driver session is already closed
+        } catch (Exception ignored) {
+            // Silently ignore if session already quit
         }
     }
 

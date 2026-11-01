@@ -1277,6 +1277,7 @@ export function AppProvider({ children }) {
 
     let user = null;
 
+    // Deduplicate allUsers by id and email to prevent duplicate matching
     const userMap = new Map();
     [...INITIAL_USERS_DB, ...usersDB].forEach(u => {
       if (u && (u.id || u.email)) userMap.set((u.id || u.email).toLowerCase(), u);
