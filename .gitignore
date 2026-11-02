@@ -39,6 +39,3 @@ backend/src/main/resources/application-secret.yml
 backend/uploads/
 uploads/
 
-# Local documents (do not push Word files to GitHub)
-*.docx
-*.doc
